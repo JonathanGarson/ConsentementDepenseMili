@@ -1,0 +1,39 @@
+# Copy this file to `.Rprofile` for local use. Do not commit `.Rprofile`.
+
+repo_root <- local({
+  from_env <- Sys.getenv("R_PROJECT_ROOT", unset = "")
+  base <- if (nzchar(from_env)) from_env else getwd()
+  normalizePath(base, winslash = "/", mustWork = FALSE)
+})
+
+path_join <- function(...) {
+  parts <- list(...)
+  parts <- unlist(parts, use.names = FALSE)
+  parts <- parts[!is.na(parts) & nzchar(parts)]
+
+  normalizePath(
+    do.call(file.path, as.list(c(repo_root, parts))),
+    winslash = "/",
+    mustWork = FALSE
+  )
+}
+
+data_path <- function(...) {
+  path_join("data", ...)
+}
+
+output_path <- function(...) {
+  path_join("output", ...)
+}
+
+path_data_raw <- function(...) {
+  data_path("raw", ...)
+}
+
+path_data_temp <- function(...) {
+  data_path("temp", ...)
+}
+
+path_data_final <- function(...) {
+  data_path("final", ...)
+}

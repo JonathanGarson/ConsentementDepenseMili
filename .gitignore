@@ -47,3 +47,10 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+*.DS_Store
+
+# Project-specific generated material
+/latex_files
+.Rprofile
+renv/library/
+renv/staging/

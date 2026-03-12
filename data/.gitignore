@@ -1,0 +1,27 @@
+# Ignore data contents but keep the folder structure.
+*
+!.gitignore
+!.gitkeep
+!raw/
+!temp/
+!final/
+!raw/.gitkeep
+!temp/.gitkeep
+!final/.gitkeep
+
+# Common data artifacts
+*.csv
+*.tsv
+*.txt
+*.xlsx
+*.xls
+*.rds
+*.rda
+*.RData
+*.parquet
+*.feather
+*.fst
+*.dta
+*.sav
+*.zip
+*.gz
