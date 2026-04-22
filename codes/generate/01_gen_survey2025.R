@@ -8,6 +8,8 @@ excel_path <- path_data_raw("barometrePO2025_clean.xlsx")
 raw_csv_path <- path_data_raw("barometrePO2025_clean.csv")
 clean_csv_path <- path_data_final("final_survey2025.csv")
 
+# Data Cleaning ----
+
 required_covariates <- c(
   "sexe",
   "matri",
@@ -162,14 +164,77 @@ if (length(missing_required) > 0) {
   )
 }
 
-clean_survey[, sexe := ifelse(sexe == "Une femme", 0, 1)]
-clean_survey[, final_sample := as.integer(complete.cases(.SD)), .SDcols = required_covariates]
+# Creating Variables ----
+final_sample_covariates <- c("gender", setdiff(required_covariates, "sexe"))
+clean_survey[
+  ,
+  gender := fifelse(
+    is.na(sexe),
+    NA_character_,
+    fifelse(sexe == "Une femme", "Femme", "Homme")
+  )
+]
+clean_survey[, gender := factor(gender, levels = c("Femme", "Homme"))]
+clean_survey[, final_sample := as.integer(complete.cases(.SD)), .SDcols = final_sample_covariates]
+clean_survey[, sexe := NULL]
 apply_do_renames(clean_survey, rename_pairs)
-clean_survey[, treated := ifelse(condition == "Indice", 1, 0)]
+clean_survey[, treatment := ifelse(condition == "Indice", 1, 0)]
 clean_survey[, q16 := as.numeric(sub("\\D+", "", q16))]
 
-fwrite(clean_survey, clean_csv_path, na = "")
+# Reusable support outcomes for expenditure questions.
+ordinal_outcome <- function(data, input_col, output_col) {
+  if (!input_col %chin% names(data)) {
+    stop("Input column not found: ", input_col, call. = FALSE)
+  }
 
-message("Raw CSV saved to: ", raw_csv_path)
-message("Clean CSV saved to: ", clean_csv_path)
-message("Rows: ", nrow(clean_survey), " | Columns: ", ncol(clean_survey))
+  data[, (output_col) := fcase(
+    get(input_col) == "Oui, tout à fait", 1L,
+    get(input_col) == "Oui, plutôt", 2L,
+    get(input_col) == "Non, plutôt pas", 3L,
+    get(input_col) == "Non, pas du tout", 4L,
+    default = NA_integer_
+  )]
+}
+
+binarize_outcome <- function(data, input_col, output_col) {
+  if (!input_col %chin% names(data)) {
+    stop("Input column not found: ", input_col, call. = FALSE)
+  }
+  data[
+    ,
+    (output_col) := fifelse(
+      is.na(get(input_col)),
+      NA_integer_,
+      fifelse(get(input_col) <= 2L, 0L, 1L)
+    )
+  ]
+}
+
+outcome_map <- data.table(
+  input_col = c("q31", "q32", "q33", "q34"),
+  outcome_stub = c("healthexp", "pensionexp", "povertyexp", "militaryexp")
+)
+
+outcome_map[,`:=`(
+    ordinal_col = paste0(outcome_stub, "_ordinal"),
+    binary_col = paste0(outcome_stub, "_binary")
+  )
+]
+
+mapply(
+  ordinal_outcome,
+  input_col = outcome_map$input_col,
+  output_col = outcome_map$ordinal_col,
+  MoreArgs = list(data = clean_survey),
+  SIMPLIFY = FALSE
+)
+
+mapply(
+    binarize_outcome,
+    input_col = outcome_map$ordinal_col,
+    output_col = outcome_map$binary_col,
+    MoreArgs = list(data = clean_survey),
+    SIMPLIFY = FALSE
+)
+
+fwrite(clean_survey, clean_csv_path)

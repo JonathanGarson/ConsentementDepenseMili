@@ -1,0 +1,68 @@
+\begin{table}
+\centering
+\scriptsize
+\begin{talltblr}[         %% tabularray outer open
+caption={Les déterminants du refus de baisser la dépense de défense},
+note{}={Liste des variables de contrôle : catégorie socio-professionnelle, situation matrimoniale, foyer, taille d'agglomération, diplôme et proximité partisane.},
+note{ }={+ p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001.},
+note{  }={Les coefficients présentés correspondent aux effets marginaux moyens estimés à partir de modèles probit pondérés par les poids de sondage. Les écarts-types robustes à l’hétéroscédasticité figurent entre parenthèses.},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]Q[]},
+column{3,4,5}={}{halign=c,},
+column{1,2}={}{halign=l,},
+}                     %% tabularray inner close
+\toprule
+& & \SetCell[c=3]{c} Refus de baisser la dépense de défense \\
+\midrule %% TinyTableHeader
+\textbf{Confiance dans l'État} & Plutôt conf. - Pas du tout & \num{-0.088}* & \num{-0.119}** & \num{-0.137}** \\
+&  & (\num{0.042}) & (\num{0.042}) & (\num{0.044}) \\
+& Plutôt pas conf. - Pas du tout & \num{0.028} & \num{0.006} & \num{-0.010} \\
+&  & (\num{0.033}) & (\num{0.034}) & (\num{0.034}) \\
+& Tout à fait conf. - Pas du tout & \num{-0.253}*** & \num{-0.263}*** & \num{-0.276}*** \\
+&  & (\num{0.065}) & (\num{0.065}) & (\num{0.068}) \\
+\midrule
+\textbf{Niveau d'imposition} & Ni trop ni peu - Trop élevés & \num{0.127}** & \num{0.120}** & \num{0.127}** \\
+&  & (\num{0.039}) & (\num{0.039}) & (\num{0.040}) \\
+& Pas assez - Trop élevés & \num{-0.078} & \num{-0.075} & \num{-0.022} \\
+&  & (\num{0.085}) & (\num{0.080}) & (\num{0.086}) \\
+\midrule
+\textbf{Risque de conflit} & Plutôt faible - Très élevé &  & \num{0.016} & \num{0.036} \\
+&  &  & (\num{0.050}) & (\num{0.049}) \\
+& Très faible - Très élevé &  & \num{-0.178}** & \num{-0.148}* \\
+&  &  & (\num{0.058}) & (\num{0.059}) \\
+& NSP - Très élevé &  & \num{0.047} & \num{0.049} \\
+&  &  & (\num{0.070}) & (\num{0.070}) \\
+& Assez élevé - Très élevé &  & \num{0.081}+ & \num{0.092}* \\
+&  &  & (\num{0.045}) & (\num{0.044}) \\
+\midrule
+\textbf{Genre} & Homme - Femme & \num{0.022} & \num{0.040} & \num{0.049} \\
+&  & (\num{0.029}) & (\num{0.029}) & (\num{0.031}) \\
+\midrule
+\textbf{Age} &  & \num{0.003}*** & \num{0.004}*** & \num{0.002} \\
+&  & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) \\
+\midrule
+\textbf{Revenus} & 12k-18k - < 12k & \num{-0.143}* & \num{-0.160}* & \num{-0.139}* \\
+&  & (\num{0.067}) & (\num{0.066}) & (\num{0.069}) \\
+& 18k-24k - < 12k & \num{-0.066} & \num{-0.081} & \num{-0.075} \\
+&  & (\num{0.061}) & (\num{0.060}) & (\num{0.066}) \\
+& 24k-36k - < 12k & \num{-0.083} & \num{-0.100}+ & \num{-0.056} \\
+&  & (\num{0.056}) & (\num{0.055}) & (\num{0.063}) \\
+& 36k-48k - < 12k & \num{-0.064} & \num{-0.076} & \num{-0.017} \\
+&  & (\num{0.058}) & (\num{0.057}) & (\num{0.068}) \\
+& 48k-60k - < 12k & \num{-0.051} & \num{-0.052} & \num{0.015} \\
+&  & (\num{0.061}) & (\num{0.060}) & (\num{0.072}) \\
+& 60k-72k - < 12k & \num{-0.102} & \num{-0.120} & \num{-0.046} \\
+&  & (\num{0.075}) & (\num{0.074}) & (\num{0.084}) \\
+& 72k-144k - < 12k & \num{-0.113} & \num{-0.112} & \num{-0.026} \\
+&  & (\num{0.086}) & (\num{0.086}) & (\num{0.093}) \\
+& 144k+ - < 12k & \num{-0.337}* & \num{-0.345}* & \num{-0.260} \\
+&  & (\num{0.147}) & (\num{0.143}) & (\num{0.170}) \\
+& NSP - < 12k & \num{-0.096} & \num{-0.127} & \num{-0.056} \\
+&  & (\num{0.108}) & (\num{0.111}) & (\num{0.118}) \\
+\midrule\midrule
+Observations &  & 1206 & 1206 & 1206 \\
+Contrôle &  & Non & Non & Oui \\
+\bottomrule
+\end{talltblr}
+\end{table}

@@ -58,8 +58,6 @@ build_end_labels <- function(panel) {
 }
 
 plot_country_lines <- function(panel,
-                               title,
-                               subtitle,
                                y_label,
                                output_file,
                                palette,
@@ -106,8 +104,6 @@ plot_country_lines <- function(panel,
       expand = expansion(mult = c(0.03, 0.18))
     ) +
     labs(
-      # title = title,
-      # subtitle = subtitle,
       x = NULL,
       y = y_label,
       caption = "Source : SIPRI. Extraction et mise en forme par les auteurs"
@@ -122,10 +118,7 @@ plot_country_lines <- function(panel,
       panel.grid.major.y = element_line(color = "#ffffff", linewidth = 0.45),
       axis.text = element_text(color = "#374151", size = 11),
       axis.title.y = element_text(color = "#111827", size = 12, margin = margin(r = 12)),
-      plot.title = element_text(color = "#111827", size = 23, face = "bold"),
-      plot.subtitle = element_text(color = "#4B5563", size = 12.5, margin = margin(b = 14)),
       plot.caption = element_text(color = "#6B7280", size = 10, margin = margin(t = 14)),
-      plot.title.position = "plot",
       plot.caption.position = "plot",
       legend.position = "none",
       plot.margin = margin(t = 18, r = 115, b = 18, l = 18)
@@ -177,8 +170,6 @@ share_expenditure <- prepare_panel(
 
 plot_country_lines(
   panel = share_gdp,
-  # title = "Dépenses militaires en part du PIB",
-  # subtitle = "Évolution annuelle de cinq pays sélectionnés, 1985-2024",
   y_label = "Part du PIB",
   output_file = output_path("figures", "miliexpenditure_share_gdp.png"),
   palette = palette,
@@ -187,8 +178,6 @@ plot_country_lines(
 
 plot_country_lines(
   panel = share_expenditure,
-  # title = "Dépenses militaires en part des dépenses publiques",
-  # subtitle = "Évolution annuelle de cinq pays sélectionnés, 1988-2024",
   y_label = "Part des dépenses publiques",
   output_file = output_path("figures", "miliexpenditure_share_expenditure.png"),
   palette = palette,

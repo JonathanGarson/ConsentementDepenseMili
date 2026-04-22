@@ -9,6 +9,8 @@
 !temp/.gitkeep
 !final/.gitkeep
 
+/.vscode
+
 # Common data artifacts
 *.csv
 *.tsv

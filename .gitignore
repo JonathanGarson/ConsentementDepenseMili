@@ -54,3 +54,4 @@ rsconnect/
 .Rprofile
 renv/library/
 renv/staging/
+.vscode/
