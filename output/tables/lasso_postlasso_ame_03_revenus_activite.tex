@@ -1,0 +1,75 @@
+\begin{table}
+\centering
+\scriptsize
+\begin{talltblr}[         %% tabularray outer open
+caption={Post-LASSO : revenus et activité},
+note{}={Sélection par LASSO logistique pondéré ; réestimation post-LASSO par probit pondéré.},
+note{ }={La colonne coeur non pénalisé force les variables du modèle principal et sélectionne les signaux additionnels.},
+note{  }={+ p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001.},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]},
+column{3,4}={}{halign=c,},
+column{1,2}={}{halign=l,},
+}                     %% tabularray inner close
+\toprule
+& Modalité & \SetCell[c=2]{c} Refus de baisser la dépense de défense \\
+& & lasso exhaustif & variable clefs + lasso \\
+\midrule %% TinyTableHeader
+\textbf{Revenus} & < 12k & \textit{Ref} & \textit{Ref} \\
+& 12k-18k & \num{0.000} & \num{-0.123}+ \\
+&  &  & (\num{0.064}) \\
+& 18k-24k & \num{0.000} & \num{-0.038} \\
+&  &  & (\num{0.058}) \\
+& 24k-36k & \num{0.000} & \num{-0.043} \\
+&  &  & (\num{0.054}) \\
+& 36k-48k & \num{0.000} & \num{-0.017} \\
+&  &  & (\num{0.056}) \\
+& 48k-60k & \num{0.000} & \num{0.003} \\
+&  &  & (\num{0.060}) \\
+& 60k-72k & \num{0.000} & \num{-0.063} \\
+&  &  & (\num{0.072}) \\
+& 72k-144k & \num{0.000} & \num{-0.060} \\
+&  &  & (\num{0.086}) \\
+& 144k+ & \num{0.000} & \num{-0.204} \\
+&  &  & (\num{0.136}) \\
+& NSP & \num{0.000} & \num{-0.161}+ \\
+&  &  & (\num{0.097}) \\
+\midrule
+\textbf{Revenus mensuels du foyer} & 12k+/mois & \textit{Ref} & \textit{Ref} \\
+& Non réponse & \num{0.065} &  \\
+&  & (\num{0.186}) &  \\
+& 1k-1,5k/mois & \num{0.031} &  \\
+&  & (\num{0.170}) &  \\
+& 1,5k-2k/mois & \num{0.125} &  \\
+&  & (\num{0.168}) &  \\
+& 2k-3k/mois & \num{0.144} &  \\
+&  & (\num{0.165}) &  \\
+& 3k-4k/mois & \num{0.182} &  \\
+&  & (\num{0.164}) &  \\
+& 4k-5k/mois & \num{0.206} &  \\
+&  & (\num{0.166}) &  \\
+& < 1k/mois & \num{0.166} &  \\
+&  & (\num{0.170}) &  \\
+& 6k-12k/mois & \num{0.186} &  \\
+&  & (\num{0.175}) &  \\
+& 5k-6k/mois & \num{0.160} &  \\
+&  & (\num{0.169}) &  \\
+\midrule
+\textbf{Statut d'activité} & Non réponse & \textit{Ref} & \textit{Ref} \\
+& A votre compte & \num{0.249}** & \num{0.140}+ \\
+&  & (\num{0.082}) & (\num{0.080}) \\
+& Dans la fonction publique & \num{0.117}+ & \num{0.132}* \\
+&  & (\num{0.063}) & (\num{0.062}) \\
+& Salarié(e) dans une entreprise privée & \num{-0.009} & \num{0.003} \\
+&  & (\num{0.053}) & (\num{0.053}) \\
+& Salarié(e) dans une entreprise publique & \num{0.000} & \num{0.000} \\
+\midrule
+\textbf{Actif} & Non réponse & \textit{Ref} & \textit{Ref} \\
+& Non & \num{0.176} & \num{0.104} \\
+&  & (\num{0.139}) & (\num{0.071}) \\
+& Oui & \num{-0.107} & \num{-0.142}* \\
+&  & (\num{0.151}) & (\num{0.055}) \\
+\bottomrule
+\end{talltblr}
+\end{table}

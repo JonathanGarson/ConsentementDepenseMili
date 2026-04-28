@@ -284,7 +284,7 @@ plot_weighted_distribution <- function(distribution,
       x = NULL,
       y = y_label,
       fill = NULL,
-      caption = "Source : Baromètre opinion 2025. Pondération : poids de propension."
+      caption = "Pondération : poids de propension."
     ) +
     theme_minimal(base_family = font_family) +
     theme(
@@ -293,13 +293,13 @@ plot_weighted_distribution <- function(distribution,
       panel.grid.minor = element_blank(),
       panel.grid.major.x = element_blank(),
       panel.grid.major.y = element_line(color = "#E5E7EB", linewidth = 0.45),
-      axis.text.x = element_text(color = "#374151", size = 10, lineheight = 0.95, margin = margin(t = 6)),
-      axis.text.y = element_text(color = "#374151", size = 11),
-      axis.title.y = element_text(color = "#111827", size = 12, margin = margin(r = 12)),
-      plot.caption = element_text(color = "#6B7280", size = 10, margin = margin(t = 14)),
+      axis.text.x = element_text(color = "#374151", size = 12.5, lineheight = 0.95, margin = margin(t = 6)),
+      axis.text.y = element_text(color = "#374151", size = 14),
+      axis.title.y = element_text(color = "#111827", size = 15, margin = margin(r = 12)),
+      plot.caption = element_text(color = "#6B7280", size = 12.5, margin = margin(t = 14)),
       legend.position = "top",
       legend.justification = "left",
-      legend.text = element_text(color = "#111827", size = 10.5),
+      legend.text = element_text(color = "#111827", size = 13),
       legend.key.width = grid::unit(1.4, "lines"),
       plot.caption.position = "plot",
       plot.margin = margin(t = 18, r = 18, b = 18, l = 18)
@@ -334,7 +334,7 @@ plot_q36_distribution <- function(distribution,
       aes(label = label_fun(share)),
       hjust = -0.08,
       family = font_family,
-      size = 4,
+      size = 5,
       color = "#111827"
     ) +
     scale_x_continuous(
@@ -345,7 +345,7 @@ plot_q36_distribution <- function(distribution,
     labs(
       x = "Part des répondants",
       y = NULL,
-      caption = "Source : Baromètre opinion 2025. Pondération : poids de propension. Plusieurs réponses possibles."
+      caption = "Pondération : poids de propension. Plusieurs réponses possibles."
     ) +
     coord_cartesian(clip = "off") +
     theme_minimal(base_family = font_family) +
@@ -355,10 +355,10 @@ plot_q36_distribution <- function(distribution,
       panel.grid.minor = element_blank(),
       panel.grid.major.y = element_blank(),
       panel.grid.major.x = element_line(color = "#E5E7EB", linewidth = 0.45),
-      axis.text.x = element_text(color = "#374151", size = 11),
-      axis.text.y = element_text(color = "#374151", size = 11, lineheight = 0.95),
-      axis.title.x = element_text(color = "#111827", size = 12, margin = margin(t = 12)),
-      plot.caption = element_text(color = "#6B7280", size = 10, margin = margin(t = 14)),
+      axis.text.x = element_text(color = "#374151", size = 14),
+      axis.text.y = element_text(color = "#374151", size = 14, lineheight = 0.95),
+      axis.title.x = element_text(color = "#111827", size = 15, margin = margin(t = 12)),
+      plot.caption = element_text(color = "#6B7280", size = 12.5, margin = margin(t = 14)),
       plot.caption.position = "plot",
       plot.margin = margin(t = 18, r = 42, b = 18, l = 18)
     )
@@ -394,7 +394,7 @@ plot_q36_by_support <- function(distribution,
       position = bar_position,
       hjust = -0.08,
       family = font_family,
-      size = 3.9,
+      size = 4.9,
       color = "#111827"
     ) +
     scale_fill_manual(
@@ -413,7 +413,7 @@ plot_q36_by_support <- function(distribution,
       y = NULL,
       fill = NULL,
       caption = paste(
-        "Source : Baromètre opinion 2025. Pondération : poids de propension.",
+        "Pondération : poids de propension.",
         "Proxy de soutien : refus d'une baisse des dépenses militaires.",
         "Plusieurs réponses possibles."
       )
@@ -426,13 +426,13 @@ plot_q36_by_support <- function(distribution,
       panel.grid.minor = element_blank(),
       panel.grid.major.y = element_blank(),
       panel.grid.major.x = element_line(color = "#E5E7EB", linewidth = 0.45),
-      axis.text.x = element_text(color = "#374151", size = 11),
-      axis.text.y = element_text(color = "#374151", size = 11, lineheight = 0.95),
-      axis.title.x = element_text(color = "#111827", size = 12, margin = margin(t = 12)),
-      plot.caption = element_text(color = "#6B7280", size = 10, margin = margin(t = 14)),
+      axis.text.x = element_text(color = "#374151", size = 14),
+      axis.text.y = element_text(color = "#374151", size = 14, lineheight = 0.95),
+      axis.title.x = element_text(color = "#111827", size = 15, margin = margin(t = 12)),
+      plot.caption = element_text(color = "#6B7280", size = 12.5, margin = margin(t = 14)),
       legend.position = "top",
       legend.justification = "left",
-      legend.text = element_text(color = "#111827", size = 10.5),
+      legend.text = element_text(color = "#111827", size = 13),
       legend.key.width = grid::unit(1.4, "lines"),
       plot.caption.position = "plot",
       plot.margin = margin(t = 18, r = 48, b = 18, l = 18)

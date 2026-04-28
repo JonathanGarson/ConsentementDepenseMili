@@ -80,7 +80,7 @@ plot_country_lines <- function(panel,
       data = end_labels,
       aes(label = country_label),
       family = font_family,
-      size = 4.2,
+      size = 5.25,
       direction = "y",
       hjust = 0,
       nudge_x = 2.6,
@@ -105,8 +105,7 @@ plot_country_lines <- function(panel,
     ) +
     labs(
       x = NULL,
-      y = y_label,
-      caption = "Source : SIPRI. Extraction et mise en forme par les auteurs"
+      y = y_label
     ) +
     coord_cartesian(clip = "off") +
     theme_minimal(base_family = font_family) +
@@ -116,9 +115,9 @@ plot_country_lines <- function(panel,
       panel.grid.minor = element_blank(),
       panel.grid.major.x = element_blank(),
       panel.grid.major.y = element_line(color = "#ffffff", linewidth = 0.45),
-      axis.text = element_text(color = "#374151", size = 11),
-      axis.title.y = element_text(color = "#111827", size = 12, margin = margin(r = 12)),
-      plot.caption = element_text(color = "#6B7280", size = 10, margin = margin(t = 14)),
+      axis.text = element_text(color = "#374151", size = 14),
+      axis.title.y = element_text(color = "#111827", size = 15, margin = margin(r = 12)),
+      plot.caption = element_text(color = "#6B7280", size = 12.5, margin = margin(t = 14)),
       plot.caption.position = "plot",
       legend.position = "none",
       plot.margin = margin(t = 18, r = 115, b = 18, l = 18)

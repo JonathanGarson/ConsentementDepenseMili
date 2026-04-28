@@ -1,0 +1,41 @@
+\begin{table}
+\centering
+\scriptsize
+\begin{talltblr}[         %% tabularray outer open
+caption={Post-LASSO : démographie},
+note{}={Sélection par LASSO logistique pondéré ; réestimation post-LASSO par probit pondéré.},
+note{ }={La colonne coeur non pénalisé force les variables du modèle principal et sélectionne les signaux additionnels.},
+note{  }={+ p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001.},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]},
+column{3,4}={}{halign=c,},
+column{1,2}={}{halign=l,},
+}                     %% tabularray inner close
+\toprule
+& Modalité & \SetCell[c=2]{c} Refus de baisser la dépense de défense \\
+& & lasso exhaustif & variable clefs + lasso \\
+\midrule %% TinyTableHeader
+\textbf{Genre} & Femme & \textit{Ref} & \textit{Ref} \\
+& Homme & \num{0.044} & \num{0.055}+ \\
+&  & (\num{0.031}) & (\num{0.028}) \\
+\midrule
+\textbf{Age} &  & \num{0.000} & \num{0.001} \\
+&  & (\num{0.001}) & (\num{0.001}) \\
+\midrule
+\textbf{Situation matrimoniale} & Autre & \textit{Ref} & \textit{Ref} \\
+& Célibataire & \num{0.183} &  \\
+&  & (\num{0.271}) &  \\
+& Divorcé & \num{0.104} &  \\
+&  & (\num{0.274}) &  \\
+& En couple marié & \num{0.109} &  \\
+&  & (\num{0.272}) &  \\
+& En couple non marié, non pacsé & \num{0.184} &  \\
+&  & (\num{0.272}) &  \\
+& En couple pacsé & \num{0.151} &  \\
+&  & (\num{0.275}) &  \\
+& Veuf/Veuve & \num{0.171} &  \\
+&  & (\num{0.282}) &  \\
+\bottomrule
+\end{talltblr}
+\end{table}

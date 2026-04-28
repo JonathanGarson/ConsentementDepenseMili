@@ -1,0 +1,53 @@
+\begin{table}
+\centering
+\scriptsize
+\begin{talltblr}[         %% tabularray outer open
+caption={Post-LASSO : attitudes},
+note{}={Sélection par LASSO logistique pondéré ; réestimation post-LASSO par probit pondéré.},
+note{ }={La colonne coeur non pénalisé force les variables du modèle principal et sélectionne les signaux additionnels.},
+note{  }={+ p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001.},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]},
+column{3,4}={}{halign=c,},
+column{1,2}={}{halign=l,},
+}                     %% tabularray inner close
+\toprule
+& Modalité & \SetCell[c=2]{c} Refus de baisser la dépense de défense \\
+& & lasso exhaustif & variable clefs + lasso \\
+\midrule %% TinyTableHeader
+\textbf{Confiance dans l'État} & Pas du tout confiance & \textit{Ref} & \textit{Ref} \\
+& Plutôt conf. & \num{-0.128}** & \num{-0.128}** \\
+&  & (\num{0.042}) & (\num{0.041}) \\
+& Plutôt pas conf. & \num{-0.017} & \num{-0.011} \\
+&  & (\num{0.032}) & (\num{0.032}) \\
+& Tout à fait conf. & \num{-0.266}*** & \num{-0.251}*** \\
+&  & (\num{0.065}) & (\num{0.063}) \\
+& Non réponse & \num{-0.077} & \num{-0.037} \\
+&  & (\num{0.194}) & (\num{0.193}) \\
+\midrule
+\textbf{Niveau d'imposition} & Juste & \textit{Ref} & \textit{Ref} \\
+& Non réponse & \num{-0.047} & \num{-0.051} \\
+&  & (\num{0.160}) & (\num{0.140}) \\
+& Trop élevés & \num{-0.116}** & \num{-0.122}*** \\
+&  & (\num{0.037}) & (\num{0.037}) \\
+& Pas assez & \num{-0.116} & \num{-0.150}+ \\
+&  & (\num{0.087}) & (\num{0.083}) \\
+\midrule
+\textbf{Risque de conflit} & Très élevé & \textit{Ref} & \textit{Ref} \\
+& Non réponse & \num{0.345}* & \num{0.366}** \\
+&  & (\num{0.157}) & (\num{0.131}) \\
+& Assez élevé & \num{0.104}* & \num{0.085}* \\
+&  & (\num{0.042}) & (\num{0.042}) \\
+& Plutôt faible & \num{0.054} & \num{0.039} \\
+&  & (\num{0.047}) & (\num{0.047}) \\
+& Très faible & \num{-0.115}+ & \num{-0.120}* \\
+&  & (\num{0.059}) & (\num{0.058}) \\
+& NSP & \num{0.056} & \num{0.032} \\
+&  & (\num{0.063}) & (\num{0.063}) \\
+\midrule\midrule
+Observations &  & 1327 & 1327 \\
+Variables retenues &  & 17 & 10 \\
+\bottomrule
+\end{talltblr}
+\end{table}

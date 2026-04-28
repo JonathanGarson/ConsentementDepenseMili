@@ -1,0 +1,73 @@
+\begin{table}
+\centering
+\scriptsize
+\begin{talltblr}[         %% tabularray outer open
+caption={Post-LASSO : diplôme, niveau d'étude et PCS},
+note{}={Sélection par LASSO logistique pondéré ; réestimation post-LASSO par probit pondéré.},
+note{ }={Colonnes omises faute de variable retenue dans ce thème : variable clefs + lasso.},
+note{  }={+ p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001.},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]},
+column{3}={}{halign=c,},
+column{1,2}={}{halign=l,},
+}                     %% tabularray inner close
+\toprule
+& Modalité & \SetCell[c=1]{c} Refus de baisser la dépense de défense \\
+& & lasso exhaustif \\
+\midrule %% TinyTableHeader
+\textbf{Diplôme} & Bac & \textit{Ref} \\
+& BEP & \num{-0.061} \\
+&  & (\num{0.056}) \\
+& BEPC & \num{0.110} \\
+&  & (\num{0.074}) \\
+& Bac +2 & \num{-0.004} \\
+&  & (\num{0.041}) \\
+& Bac +3 & \num{0.042} \\
+&  & (\num{0.050}) \\
+& Bac +4 & \num{-0.057} \\
+&  & (\num{0.066}) \\
+& Bac +5 & \num{-0.021} \\
+&  & (\num{0.060}) \\
+& CAP & \num{-0.033} \\
+&  & (\num{0.052}) \\
+& Grandes écoles & \num{0.145} \\
+&  & (\num{0.089}) \\
+& NSP / refus & \num{0.475}*** \\
+&  & (\num{0.027}) \\
+& Sans diplôme / primaire & \num{-0.137} \\
+&  & (\num{0.095}) \\
+& > Bac +5 & \num{-0.072} \\
+&  & (\num{0.082}) \\
+\midrule
+\textbf{Niveau d'étude} & Bac & \textit{Ref} \\
+& Bac +2 & \num{0.000} \\
+& Inférieur au Bac & \num{0.000} \\
+& Supérieur à Bac +2 & \num{0.000} \\
+& NSP/Refus & \num{0.000} \\
+\midrule
+\textbf{PCS répondant} & Agriculteur exploitant & \textit{Ref} \\
+& Artisan / commerçant / chef d'entreprise & \num{-0.145} \\
+&  & (\num{0.153}) \\
+& Autre sans activité & \num{0.077} \\
+&  & (\num{0.078}) \\
+& Cadre / profession intellectuelle sup. & \num{-0.086} \\
+&  & (\num{0.142}) \\
+& Élève / étudiant & \num{-0.163}+ \\
+&  & (\num{0.099}) \\
+& Employé & \num{-0.035} \\
+&  & (\num{0.136}) \\
+& Premier emploi & \num{0.097} \\
+&  & (\num{0.147}) \\
+& Au foyer & \num{0.028} \\
+&  & (\num{0.088}) \\
+& Ouvrier & \num{-0.051} \\
+&  & (\num{0.148}) \\
+& Profession intermédiaire & \num{-0.065} \\
+&  & (\num{0.142}) \\
+& Profession libérale & \num{-0.345}* \\
+&  & (\num{0.149}) \\
+& Retraité & \num{0.000} \\
+\bottomrule
+\end{talltblr}
+\end{table}

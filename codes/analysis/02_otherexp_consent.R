@@ -83,6 +83,20 @@ clean_ame_labels <- function(ame) {
   ame$contrast[ame$contrast == "Tout à fait confiance - Pas du tout confiance"] <- "Tout à fait conf. - Pas du tout"
   ame$contrast[ame$contrast == "Vous ne savez pas - Très élevé"] <- "NSP - Très élevé"
 
+  reference_suffixes <- c(
+    " - Pas du tout",
+    " - Trop élevés",
+    " - Très élevé"
+  )
+  for (suffix in reference_suffixes) {
+    suffix_idx <- !is.na(ame$contrast) & endsWith(ame$contrast, suffix)
+    ame$contrast[suffix_idx] <- substring(
+      ame$contrast[suffix_idx],
+      1L,
+      nchar(ame$contrast[suffix_idx]) - nchar(suffix)
+    )
+  }
+
   ame
 }
 
@@ -93,15 +107,15 @@ order_otherexp_table_rows <- function(ame) {
     "Risque de conflit"
   )
   contrast_order <- c(
-    "Plutôt conf. - Pas du tout",
-    "Plutôt pas conf. - Pas du tout",
-    "Tout à fait conf. - Pas du tout",
-    "Ni trop ni peu - Trop élevés",
-    "Pas assez - Trop élevés",
-    "Assez élevé - Très élevé",
-    "Plutôt faible - Très élevé",
-    "Très faible - Très élevé",
-    "NSP - Très élevé"
+    "Plutôt conf.",
+    "Plutôt pas conf.",
+    "Tout à fait conf.",
+    "Ni trop ni peu",
+    "Pas assez",
+    "Assez élevé",
+    "Plutôt faible",
+    "Très faible",
+    "NSP"
   )
 
   ordering_frame <- data.table(
@@ -206,6 +220,11 @@ postprocess_otherexp_table <- function(path, spanner_label, outcome_headers) {
     "Niveau d'imposition",
     "Risque de conflit"
   )
+  reference_labels <- c(
+    "Confiance dans l'État" = "Pas du tout confiance",
+    "Niveau d'imposition" = "Trop élevés",
+    "Risque de conflit" = "Très élevé"
+  )
   lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
   lines <- sub("\\\\centering", "\\\\centering\n\\\\scriptsize", lines, fixed = FALSE)
 
@@ -275,6 +294,16 @@ postprocess_otherexp_table <- function(path, spanner_label, outcome_headers) {
     }
 
     reordered_start_idx <- c(reordered_start_idx, length(reordered_lines) + 1L)
+    if (term_label %in% names(reference_labels)) {
+      model_columns <- length(outcome_headers)
+      reference_cells <- paste(rep("\\textit{Ref}", model_columns), collapse = " & ")
+      original_row_prefix <- paste0(term_label, " &")
+      block[1] <- paste0(
+        term_label, " & ", reference_labels[[term_label]], " & ",
+        reference_cells, " \\\\",
+        "\n&", substring(block[1], nchar(original_row_prefix) + 1L)
+      )
+    }
     reordered_lines <- c(reordered_lines, block)
   }
 

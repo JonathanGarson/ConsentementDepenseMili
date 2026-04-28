@@ -60,6 +60,32 @@ relevel_income_factor <- function(x) {
   factor(x_chr, levels = present_levels)
 }
 
+relevel_age2_factor <- function(x) {
+  age_levels <- c(
+    "18 à 24 ans",
+    "25 à 29 ans",
+    "30 à 34 ans",
+    "35 à 39 ans",
+    "40 à 44 ans",
+    "45 à 49 ans",
+    "50 à 54 ans",
+    "55 à 59 ans",
+    "60 à 64 ans",
+    "65 à 69 ans",
+    "70 ans et plus"
+  )
+
+  x_chr <- as.character(x)
+  ref <- age_levels[1]
+
+  if (!ref %in% x_chr) {
+    stop("Reference level '", ref, "' not found in age2", call. = FALSE)
+  }
+
+  present_levels <- age_levels[age_levels %chin% unique(x_chr)]
+  factor(x_chr, levels = present_levels)
+}
+
 # Survey-weighted probits require a numeric, strictly positive weights column.
 filter_valid_weights <- function(data) {
   if (!"weights" %chin% names(data)) {
@@ -85,13 +111,13 @@ filter_valid_weights <- function(data) {
 clean_ame_labels <- function(ame) {
   revenue_label_map <- c(
     "Moins de 12 000€; (soit moins de 1 000€; par mois)" = "< 12k",
-    "De 12 000€; à moins de 18 000€; (1 000€; à 1 500€; par mois)" = "12k-18k",
-    "De 18 000€; à moins de 24 000€; (1 500€; à 2 000€; par mois)" = "18k-24k",
-    "De 24 000€; à moins de 36 000€; (2 000€; à 3 000€; par mois)" = "24k-36k",
-    "De 36 000€; à moins de 48 000€; (3 000€; à 4 000€; par mois)" = "36k-48k",
-    "De 48 000€; à moins de 60 000€; (4 000€; à 5 000€; par mois)" = "48k-60k",
-    "De 60 000€; à moins de 72 000€; (5 000€; à 6 000€; par mois)" = "60k-72k",
-    "De 72 000€; à moins de 144 000€; (6 000€; à 12 000€; par mois)" = "72k-144k",
+    "De 12 000€; à moins de 18 000€; (1 000€; à 1 500€; par mois)" = "12k--18k",
+    "De 18 000€; à moins de 24 000€; (1 500€; à 2 000€; par mois)" = "18k--24k",
+    "De 24 000€; à moins de 36 000€; (2 000€; à 3 000€; par mois)" = "24k--36k",
+    "De 36 000€; à moins de 48 000€; (3 000€; à 4 000€; par mois)" = "36k--48k",
+    "De 48 000€; à moins de 60 000€; (4 000€; à 5 000€; par mois)" = "48k--60k",
+    "De 60 000€; à moins de 72 000€; (5 000€; à 6 000€; par mois)" = "60k--72k",
+    "De 72 000€; à moins de 144 000€; (6 000€; à 12 000€; par mois)" = "72k--144k",
     "144 000€; et plus (12 000€; par mois et plus)" = "144k+",
     "Je ne souhaite pas répondre" = "NSP"
   )
@@ -101,15 +127,18 @@ clean_ame_labels <- function(ame) {
   ame$term[ame$term == "q35"] <- "Risque de conflit"
   ame$term[ame$term == "gender"] <- "Genre"
   ame$term[ame$term == "continuous_age"] <- "Age"
+  ame$term[ame$term == "continuous_age_sq"] <- "Age\\textsuperscript{2}"
+  ame$term[ame$term == "age2"] <- "age_2"
+  ame$term[ame$term == "acte_citoyen"] <- "Acte citoyen"
   ame$term[ame$term == "tranche_revenus"] <- "Revenus"
 
-  ame$contrast[ame$contrast == "Ni trop, ni pas assez élevés - Trop élevés"] <- "Ni trop ni peu - Trop élevés"
-  ame$contrast[ame$contrast == "Pas assez élevés - Trop élevés"] <- "Pas assez - Trop élevés"
+  ame$contrast[ame$contrast == "Pas assez élevés - Ni trop, ni pas assez élevés"] <- "Pas assez - Juste"
+  ame$contrast[ame$contrast == "Trop élevés - Ni trop, ni pas assez élevés"] <- "Trop élevés - Juste"
   ame$contrast[ame$contrast == "Plutôt confiance - Pas du tout confiance"] <- "Plutôt conf. - Pas du tout"
   ame$contrast[ame$contrast == "Plutôt pas confiance - Pas du tout confiance"] <- "Plutôt pas conf. - Pas du tout"
   ame$contrast[ame$contrast == "Tout à fait confiance - Pas du tout confiance"] <- "Tout à fait conf. - Pas du tout"
   ame$contrast[ame$contrast == "Vous ne savez pas - Très élevé"] <- "NSP - Très élevé"
-  ame$contrast[ame$term == "Age"] <- ""
+  ame$contrast[ame$term %in% c("Age", "Age\\textsuperscript{2}")] <- ""
 
   for (long_label in names(revenue_label_map)) {
     ame$contrast <- gsub(
@@ -120,44 +149,89 @@ clean_ame_labels <- function(ame) {
     )
   }
 
+  reference_suffixes <- c(
+    " - Pas du tout d’accord",
+    " - Pas du tout",
+    " - Juste",
+    " - Trop élevés",
+    " - Très élevé",
+    " - 18 à 24 ans",
+    " - Femme",
+    " - < 12k"
+  )
+  for (suffix in reference_suffixes) {
+    suffix_idx <- !is.na(ame$contrast) & endsWith(ame$contrast, suffix)
+    ame$contrast[suffix_idx] <- substring(
+      ame$contrast[suffix_idx],
+      1L,
+      nchar(ame$contrast[suffix_idx]) - nchar(suffix)
+    )
+  }
+
   ame
 }
 
 order_main_table_rows <- function(ame) {
   term_order <- c(
     "Confiance dans l'État",
+    "Acte citoyen",
     "Niveau d'imposition",
     "Risque de conflit",
     "Genre",
+    "age_2",
     "Age",
+    "Age\\textsuperscript{2}",
     "Revenus"
   )
-  contrast_order <- c(
-    "",
-    "Plutôt conf. - Pas du tout",
-    "Plutôt pas conf. - Pas du tout",
-    "Tout à fait conf. - Pas du tout",
-    "Assez élevé - Très élevé",
-    "Plutôt faible - Très élevé",
-    "Très faible - Très élevé",
-    "NSP - Très élevé",
-    "Ni trop ni peu - Trop élevés",
-    "Pas assez - Trop élevés",
-    "Homme - Femme",
-    "12k-18k - < 12k",
-    "18k-24k - < 12k",
-    "24k-36k - < 12k",
-    "36k-48k - < 12k",
-    "48k-60k - < 12k",
-    "60k-72k - < 12k",
-    "72k-144k - < 12k",
-    "144k+ - < 12k",
-    "NSP - < 12k"
+  contrast_order <- list(
+    "Confiance dans l'État" = c("Plutôt pas conf.", "Plutôt conf.", "Tout à fait conf."),
+    "Acte citoyen" = c("Plutôt pas d’accord", "Plutôt d’accord", "Tout à fait d’accord"),
+    "Niveau d'imposition" = c("Trop élevés", "Pas assez"),
+    "Risque de conflit" = c("Assez élevé", "Plutôt faible", "Très faible", "NSP"),
+    "Genre" = "Homme",
+    "age_2" = c(
+      "25 à 29 ans",
+      "30 à 34 ans",
+      "35 à 39 ans",
+      "40 à 44 ans",
+      "45 à 49 ans",
+      "50 à 54 ans",
+      "55 à 59 ans",
+      "60 à 64 ans",
+      "65 à 69 ans",
+      "70 ans et plus"
+    ),
+    "Age" = "",
+    "Age\\textsuperscript{2}" = "",
+    "Revenus" = c(
+      "12k--18k",
+      "18k--24k",
+      "24k--36k",
+      "36k--48k",
+      "48k--60k",
+      "60k--72k",
+      "72k--144k",
+      "144k+",
+      "NSP"
+    )
+  )
+  contrast_rank <- vapply(
+    seq_len(nrow(ame)),
+    function(i) {
+      term_contrast_order <- contrast_order[[ame$term[i]]]
+      if (is.null(term_contrast_order)) {
+        return(Inf)
+      }
+
+      rank <- match(ame$contrast[i], term_contrast_order)
+      ifelse(is.na(rank), length(term_contrast_order) + 1L, rank)
+    },
+    numeric(1)
   )
 
   ordering_frame <- data.table(
     term_rank = fifelse(is.na(match(ame$term, term_order)), length(term_order) + 1L, match(ame$term, term_order)),
-    contrast_rank = fifelse(is.na(match(ame$contrast, contrast_order)), length(contrast_order) + 1L, match(ame$contrast, contrast_order))
+    contrast_rank = contrast_rank
   )
   order_idx <- do.call(order, ordering_frame)
   ame[order_idx, ]
@@ -290,18 +364,113 @@ print_interaction_results <- function(interaction_table) {
   cat(sprintf("- %s\n", gradient_sentence))
 }
 
-# Add a smaller font size to the exported LaTeX table after modelsummary writes it.
+# Match the exported LaTeX table to the paper layout after modelsummary writes it.
 postprocess_defense_table <- function(path) {
   term_labels <- c(
     "Confiance dans l'État",
+    "Acte citoyen",
     "Niveau d'imposition",
     "Risque de conflit",
     "Genre",
     "Age",
+    "Age\\textsuperscript{2}",
     "Revenus"
   )
+  reference_labels <- c(
+    "Confiance dans l'État" = "Pas du tout confiance",
+    "Acte citoyen" = "Pas du tout d’accord",
+    "Niveau d'imposition" = "Juste",
+    "Risque de conflit" = "Très élevé",
+    "Genre" = "Femme",
+    "Revenus" = "< 12k"
+  )
+
+  split_table_row <- function(line) {
+    row_end <- " \\\\"
+    if (endsWith(line, row_end)) {
+      line <- substring(line, 1L, nchar(line) - nchar(row_end))
+    }
+    strsplit(line, " & ", fixed = TRUE)[[1L]]
+  }
+
+  build_table_row <- function(cells) {
+    paste0(paste(cells, collapse = " & "), " \\\\")
+  }
+
+  combine_estimate_and_se <- function(estimate_cells, se_cells) {
+    for (j in 3:5) {
+      if (nzchar(estimate_cells[[j]]) && nzchar(se_cells[[j]])) {
+        estimate_cells[[j]] <- paste(estimate_cells[[j]], se_cells[[j]])
+      }
+    }
+    estimate_cells
+  }
+
+  parse_block_rows <- function(term_label, block) {
+    if (term_label == "Risque de conflit") {
+      blank_term_idx <- grepl("^Risque de conflit &  &  & \\\\num\\{", block)
+      block[blank_term_idx] <- sub(
+        "^Risque de conflit &  &",
+        "Risque de conflit & NSP &",
+        block[blank_term_idx]
+      )
+
+      blank_continuation_idx <- grepl("^&  &  & \\\\num\\{", block)
+      block[blank_continuation_idx] <- sub(
+        "^&  &",
+        "& NSP &",
+        block[blank_continuation_idx]
+      )
+    }
+
+    rows <- list()
+    i <- 1L
+    while (i <= length(block)) {
+      cells <- split_table_row(block[[i]])
+      if (length(cells) != 5L) {
+        i <- i + 1L
+        next
+      }
+
+      if (identical(cells[[1L]], term_label)) {
+        cells[[1L]] <- ""
+      }
+
+      if (i < length(block)) {
+        next_cells <- split_table_row(block[[i + 1L]])
+        is_standard_error_row <- length(next_cells) == 5L &&
+          !nzchar(next_cells[[1L]]) &&
+          !nzchar(next_cells[[2L]]) &&
+          any(startsWith(next_cells[3:5], "(\\num{"))
+
+        if (is_standard_error_row) {
+          cells <- combine_estimate_and_se(cells, next_cells)
+          i <- i + 2L
+        } else {
+          i <- i + 1L
+        }
+      } else {
+        i <- i + 1L
+      }
+
+      rows[[length(rows) + 1L]] <- cells
+    }
+
+    if (term_label %in% names(reference_labels)) {
+      reference_cells <- c(
+        paste0("\\textbf{", term_label, "}"),
+        reference_labels[[term_label]],
+        rep("\\textit{Ref}", 3L)
+      )
+      rows <- c(list(reference_cells), rows)
+    } else if (length(rows) > 0L) {
+      rows[[1L]][[1L]] <- paste0("\\textbf{", term_label, "}")
+    }
+
+    vapply(rows, build_table_row, character(1))
+  }
+
   lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
-  lines <- sub("\\\\centering", "\\\\centering\n\\\\scriptsize", lines, fixed = FALSE)
 
   header_idx <- grep("TinyTableHeader", lines, fixed = TRUE)
   if (length(header_idx) != 1L) {
@@ -346,18 +515,15 @@ postprocess_defense_table <- function(path) {
     )]
 
     if (length(matched_term) == 1L) {
-      blocks[[matched_term]] <- block
+      blocks[[matched_term]] <- c(blocks[[matched_term]], block)
     }
   }
 
-  reordered_blocks <- unlist(blocks[term_labels][lengths(blocks[term_labels]) > 0L], use.names = FALSE)
-
-  if (length(reordered_blocks) == 0L) {
+  if (!any(lengths(blocks[term_labels]) > 0L)) {
     stop("No term blocks available after reordering the defense table.", call. = FALSE)
   }
 
   reordered_lines <- character(0)
-  reordered_start_idx <- integer(0)
 
   for (term_label in term_labels) {
     block <- blocks[[term_label]]
@@ -365,31 +531,11 @@ postprocess_defense_table <- function(path) {
       next
     }
 
-    reordered_start_idx <- c(reordered_start_idx, length(reordered_lines) + 1L)
-    reordered_lines <- c(reordered_lines, block)
-  }
-
-  for (i in seq_along(reordered_start_idx)) {
-    row_idx <- reordered_start_idx[i]
-    matched_term <- term_labels[vapply(
-      term_labels,
-      function(term_label) startsWith(reordered_lines[row_idx], paste0(term_label, " &")),
-      logical(1)
-    )]
-
-    if (length(matched_term) != 1L) {
-      next
+    block_rows <- parse_block_rows(term_label, block)
+    if (length(reordered_lines) > 0L) {
+      block_rows[[1L]] <- paste0("\\midrule\n", block_rows[[1L]])
     }
-
-    reordered_lines[row_idx] <- sub(
-      paste0("^", matched_term, " &"),
-      paste0("\\\\textbf{", matched_term, "} &"),
-      reordered_lines[row_idx]
-    )
-
-    if (i > 1L) {
-      reordered_lines[row_idx] <- paste0("\\midrule\n", reordered_lines[row_idx])
-    }
+    reordered_lines <- c(reordered_lines, block_rows)
   }
 
   lines <- c(
@@ -400,6 +546,236 @@ postprocess_defense_table <- function(path) {
 
   observations_idx <- which(startsWith(lines, "Observations &"))
   lines[observations_idx] <- paste0("\\midrule\\midrule\n", lines[observations_idx])
+
+  start_idx <- grep("^\\\\begin\\{table\\}", lines)
+  end_idx <- grep("^\\\\end\\{table\\}", lines)
+  talltblr_end_idx <- grep("^\\\\end\\{talltblr\\}", lines)
+  outer_open_idx <- grep("^\\\\begin\\{talltblr\\}", lines)
+  inner_close_idx <- grep("^\\}                     %% tabularray inner close$", lines)
+
+  if (
+    length(start_idx) != 1L ||
+      length(end_idx) != 1L ||
+      length(talltblr_end_idx) != 1L ||
+      length(outer_open_idx) != 1L ||
+      length(inner_close_idx) != 1L
+  ) {
+    stop("Could not locate the LaTeX wrapper for the defense table.", call. = FALSE)
+  }
+
+  note_text <- paste(
+    "\\textbf{Note:} Les trois modèles incluent le genre, l'âge, l'âge au carré, les revenus et l'acte citoyen.",
+    "Le modèle avec contrôles ajoute la catégorie socio-professionnelle, la situation matrimoniale, le foyer,",
+    "la taille d'agglomération, le diplôme et la proximité partisane.",
+    "Les coefficients présentés correspondent aux effets marginaux moyens estimés.",
+    "Les écarts-types robustes à l’hétéroscédasticité figurent entre parenthèses à côté des estimations.",
+    "Seuil de confiance : + p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001."
+  )
+
+  outer_lines <- c(
+    "\\begin{table*}[!t]",
+    "\\centering",
+    "\\scriptsize \\selectfont",
+    "\\setlength{\\tabcolsep}{3pt}",
+    "",
+    "\\begin{talltblr}[",
+    "caption={Les déterminants du refus de baisser la dépense de défense},",
+    "label={tab:deter_consent_def},",
+    paste0("note{}={", note_text, "},"),
+    "]{"
+  )
+  inner_lines <- c(
+    "width=0.97\\textwidth,",
+    "\\rowsep = 0pt,",
+    "colspec={",
+    "Q[l,wd=0.22\\textwidth]",
+    "Q[l,wd=0.20\\textwidth]",
+    "Q[c,wd=0.16\\textwidth]",
+    "Q[c,wd=0.16\\textwidth]",
+    "Q[c,wd=0.16\\textwidth]",
+    "},",
+    "column{3,4,5}={halign=c},",
+    "column{1,2}={halign=l},",
+    "row{1}={font=\\bfseries},",
+    "}"
+  )
+
+  lines <- c(
+    outer_lines,
+    inner_lines,
+    lines[(inner_close_idx + 1L):(talltblr_end_idx - 1L)],
+    "\\end{talltblr}",
+    "\\end{table*}"
+  )
+
+  writeLines(lines, path, useBytes = TRUE)
+}
+
+format_ame_cell <- function(ame, term_label, contrast_label) {
+  row <- as.data.table(ame)[term == term_label & contrast == contrast_label]
+  if (nrow(row) == 0L) {
+    return("")
+  }
+
+  estimate <- row$estimate[[1L]]
+  std_error <- row$std.error[[1L]]
+  p_value <- row$p.value[[1L]]
+  if (abs(estimate) < 0.0005) {
+    estimate <- 0
+  }
+  if (abs(std_error) < 0.0005) {
+    std_error <- 0
+  }
+
+  stars <- if (is.na(p_value)) {
+    ""
+  } else if (p_value < 0.001) {
+    "***"
+  } else if (p_value < 0.01) {
+    "**"
+  } else if (p_value < 0.05) {
+    "*"
+  } else if (p_value < 0.1) {
+    "+"
+  } else {
+    ""
+  }
+
+  sprintf("\\num{%.3f}%s (\\num{%.3f})", estimate, stars, std_error)
+}
+
+write_defense_table <- function(path,
+                                ame_gender_only,
+                                ame_baseline,
+                                ame_controls,
+                                nobs_gender_only,
+                                nobs_baseline,
+                                nobs_controls,
+                                age_terms = c("Age", "Age\\textsuperscript{2}"),
+                                age_reference_label = NULL,
+                                age_display_labels = NULL,
+                                note_text = paste(
+                                  "\\textbf{Note:} Les trois modèles incluent le genre, l'âge, l'âge au carré, les revenus et l'acte citoyen.",
+                                  "Le modèle avec contrôles ajoute la catégorie socio-professionnelle, la situation matrimoniale, le foyer,",
+                                  "la taille d'agglomération, le diplôme et la proximité partisane.",
+                                  "Les coefficients présentés correspondent aux effets marginaux moyens estimés.",
+                                  "Les écarts-types robustes à l’hétéroscédasticité figurent entre parenthèses à côté des estimations.",
+                                  "Seuil de confiance : + p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001."
+                                )) {
+  models <- list(ame_gender_only, ame_baseline, ame_controls)
+  model_cell <- function(term_label, contrast_label) {
+    vapply(models, format_ame_cell, character(1), term_label = term_label, contrast_label = contrast_label)
+  }
+  add_row <- function(term_label, contrast_label, cells) {
+    paste(c(term_label, contrast_label, cells), collapse = " & ")
+  }
+  add_ref <- function(term_label, reference_label) {
+    add_row(paste0("\\textbf{", term_label, "}"), reference_label, rep("\\textit{Ref}", 3L))
+  }
+  add_estimate <- function(term_label, contrast_label, display_label, bold = FALSE) {
+    first_cell <- if (bold) paste0("\\textbf{", term_label, "}") else ""
+    add_row(first_cell, display_label, model_cell(term_label, contrast_label))
+  }
+  age_rows <- if (is.null(age_reference_label)) {
+    unlist(
+      lapply(
+        seq_along(age_terms),
+        function(i) {
+          c(
+            add_estimate(age_terms[i], "", "", bold = TRUE),
+            if (i < length(age_terms)) "\\midrule" else NULL
+          )
+        }
+      ),
+      use.names = FALSE
+    )
+  } else {
+    c(
+      add_ref(age_terms[1], age_reference_label),
+      vapply(
+        age_display_labels,
+        function(label) add_estimate(age_terms[1], label, label),
+        character(1)
+      )
+    )
+  }
+
+  body <- c(
+    add_ref("Confiance dans l'État", "Pas du tout confiance"),
+    add_estimate("Confiance dans l'État", "Plutôt pas conf.", "Plutôt pas conf."),
+    add_estimate("Confiance dans l'État", "Plutôt conf.", "Plutôt conf."),
+    add_estimate("Confiance dans l'État", "Tout à fait conf.", "Tout à fait conf."),
+    "\\midrule",
+    add_ref("Acte citoyen", "Pas du tout d’accord"),
+    add_estimate("Acte citoyen", "Plutôt pas d’accord", "Plutôt pas d’accord"),
+    add_estimate("Acte citoyen", "Plutôt d’accord", "Plutôt d’accord"),
+    add_estimate("Acte citoyen", "Tout à fait d’accord", "Tout à fait d’accord"),
+    "\\midrule",
+    add_ref("Niveau d'imposition", "Juste"),
+    add_estimate("Niveau d'imposition", "Trop élevés", "Trop élevés"),
+    add_estimate("Niveau d'imposition", "Pas assez", "Pas assez"),
+    "\\midrule",
+    add_ref("Risque de conflit", "Très élevé"),
+    add_estimate("Risque de conflit", "Assez élevé", "Assez élevé"),
+    add_estimate("Risque de conflit", "Plutôt faible", "Plutôt faible"),
+    add_estimate("Risque de conflit", "Très faible", "Très faible"),
+    add_estimate("Risque de conflit", "NSP", "NSP"),
+    "\\midrule",
+    add_ref("Genre", "Femme"),
+    add_estimate("Genre", "Homme", "Homme"),
+    "\\midrule",
+    age_rows,
+    "\\midrule",
+    add_ref("Revenus", "< 12k"),
+    add_estimate("Revenus", "12k--18k", "12k--18k"),
+    add_estimate("Revenus", "18k--24k", "18k--24k"),
+    add_estimate("Revenus", "24k--36k", "24k--36k"),
+    add_estimate("Revenus", "36k--48k", "36k--48k"),
+    add_estimate("Revenus", "48k--60k", "48k--60k"),
+    add_estimate("Revenus", "60k--72k", "60k--72k"),
+    add_estimate("Revenus", "72k--144k", "72k--144k"),
+    add_estimate("Revenus", "144k+", "144k+"),
+    add_estimate("Revenus", "NSP", "NSP")
+  )
+  body <- paste0(body, " \\\\")
+  body[body == "\\midrule \\\\"] <- "\\midrule"
+
+  lines <- c(
+    "\\begin{table*}[!t]",
+    "\\centering",
+    "\\scriptsize \\selectfont",
+    "\\setlength{\\tabcolsep}{3pt}",
+    "",
+    "\\begin{talltblr}[",
+    "caption={Les déterminants du refus de baisser la dépense de défense},",
+    "label={tab:deter_consent_def},",
+    paste0("note{}={", note_text, "},"),
+    "]{",
+    "width=0.97\\textwidth,",
+    "\\rowsep = 0pt,",
+    "colspec={",
+    "Q[l,wd=0.22\\textwidth]",
+    "Q[l,wd=0.20\\textwidth]",
+    "Q[c,wd=0.16\\textwidth]",
+    "Q[c,wd=0.16\\textwidth]",
+    "Q[c,wd=0.16\\textwidth]",
+    "},",
+    "column{3,4,5}={halign=c},",
+    "column{1,2}={halign=l},",
+    "row{1}={font=\\bfseries},",
+    "}",
+    "\\toprule",
+    "& & \\SetCell[c=3]{c} Refus de baisser la dépense de défense \\\\",
+    "\\midrule",
+    body,
+    "\\midrule\\midrule",
+    paste0(add_row("Observations", "", c(nobs_gender_only, nobs_baseline, nobs_controls)), " \\\\"),
+    paste0(add_row("Contrôle", "", c("Non", "Non", "Oui")), " \\\\"),
+    "\\bottomrule",
+    "\\end{talltblr}",
+    "\\end{table*}"
+  )
+
   writeLines(lines, path, useBytes = TRUE)
 }
 
@@ -413,10 +789,10 @@ model_vars <- c("militaryexp_binary", "partisane", "q30_q2", "q35", "q19")
 # Table 1 uses a richer complete-case sample because it adds socioeconomic controls.
 comparison_vars <- c(
   "militaryexp_binary", "q30_q2", "q35", "q19", "pcs", "matri", "foyer",
-  "continuous_age", "tailleagglo5", "tranche_revenus", "diplome", "partisane", "gender"
+  "continuous_age", "q23", "tailleagglo5", "tranche_revenus", "diplome", "partisane", "gender"
 )
 comparison_char_vars <- c(
-  "q30_q2", "q35", "q19", "pcs", "matri", "foyer",
+  "q30_q2", "q35", "q19", "q23", "pcs", "matri", "foyer",
   "tailleagglo5", "tranche_revenus", "diplome", "partisane", "gender"
 )
 
@@ -438,6 +814,13 @@ comparison_sample_vars <- c(comparison_vars, "weights")
 consent_comparison <- consent_comparison[
   complete.cases(consent_comparison[, ..comparison_sample_vars])
 ]
+consent_comparison[
+  ,
+  `:=`(
+    continuous_age_sq = continuous_age^2,
+    acte_citoyen = q23
+  )
+]
 
 # Sample used for the console-only tables: only variables entering the core models.
 consent <- copy(survey2025)
@@ -454,12 +837,14 @@ consent <- consent[complete.cases(consent[, ..model_sample_vars])]
 # First column omits perceived war risk so the gender AME can be compared to the baseline model.
 consent_gender_only <- copy(consent_comparison)
 consent_gender_only[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
-consent_gender_only[, q19 := relevel_factor(q19, ref = "Trop élevés", var_name = "q19")]
+consent_gender_only[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
 consent_gender_only[, gender := relevel_factor(gender, ref = "Femme", var_name = "gender")]
+consent_gender_only[, acte_citoyen := relevel_factor(acte_citoyen, ref = "Pas du tout d’accord", var_name = "acte_citoyen")]
 consent_gender_only[, tranche_revenus := relevel_income_factor(tranche_revenus)]
 
 consent_military_exp_gender_only <- feglm(
-  militaryexp_binary ~ q30_q2 + q19 + continuous_age + tranche_revenus + gender,
+  militaryexp_binary ~ q30_q2 + q19 + continuous_age + continuous_age_sq +
+    acte_citoyen + tranche_revenus + gender,
   family = binomial(link = "probit"),
   vcov = "hetero",
   weights = ~ weights,
@@ -476,12 +861,14 @@ ame_gender_only <- avg_slopes(
 consent_baseline <- copy(consent_comparison)
 consent_baseline[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
 consent_baseline[, q35 := relevel_factor(q35, ref = "Très élevé", var_name = "q35")]
-consent_baseline[, q19 := relevel_factor(q19, ref = "Trop élevés", var_name = "q19")]
+consent_baseline[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
 consent_baseline[, gender := relevel_factor(gender, ref = "Femme", var_name = "gender")]
+consent_baseline[, acte_citoyen := relevel_factor(acte_citoyen, ref = "Pas du tout d’accord", var_name = "acte_citoyen")]
 consent_baseline[, tranche_revenus := relevel_income_factor(tranche_revenus)]
 
 consent_military_exp_baseline <- feglm(
-  militaryexp_binary ~ q30_q2 + q35 + q19 + continuous_age + tranche_revenus + gender,
+  militaryexp_binary ~ q30_q2 + q35 + q19 + continuous_age + continuous_age_sq +
+    acte_citoyen + tranche_revenus + gender,
   family = binomial(link = "probit"),
   vcov = "hetero",
   weights = ~ weights,
@@ -498,8 +885,9 @@ ame_baseline <- avg_slopes(
 consent_with_controls <- copy(consent_comparison)
 consent_with_controls[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
 consent_with_controls[, q35 := relevel_factor(q35, ref = "Très élevé", var_name = "q35")]
-consent_with_controls[, q19 := relevel_factor(q19, ref = "Trop élevés", var_name = "q19")]
+consent_with_controls[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
 consent_with_controls[, gender := relevel_factor(gender, ref = "Femme", var_name = "gender")]
+consent_with_controls[, acte_citoyen := relevel_factor(acte_citoyen, ref = "Pas du tout d’accord", var_name = "acte_citoyen")]
 consent_with_controls[, partisane := relevel_factor(partisane, ref = "Aucun", var_name = "partisane")]
 consent_with_controls[
   ,
@@ -515,7 +903,8 @@ consent_with_controls[
 
 consent_military_exp_controls <- feglm(
   militaryexp_binary ~ q30_q2 + q35 + q19 + pcs + matri + foyer +
-    continuous_age + tailleagglo5 + tranche_revenus + diplome + partisane + gender,
+    continuous_age + continuous_age_sq + acte_citoyen + tailleagglo5 +
+    tranche_revenus + diplome + partisane + gender,
   family = binomial(link = "probit"),
   vcov = "hetero",
   weights = ~ weights,
@@ -531,40 +920,138 @@ ame_gender_only <- order_main_table_rows(clean_ame_labels(ame_gender_only))
 ame_baseline <- order_main_table_rows(clean_ame_labels(ame_baseline))
 ame_controls <- order_main_table_rows(clean_ame_labels(ame_controls))
 
-modelsummary(
-  list(
-    "Sans risque + genre" = ame_gender_only,
-    "Base + genre" = ame_baseline,
-    "Avec contrôles* + genre" = ame_controls
-  ),
-  title = "Les déterminants du refus de baisser la dépense de défense",
-  output = file.path(table_dir, "defense_ame_baseline_controls.tex"),
-  escape = FALSE,
-  shape = term + contrast ~ model,
-  estimate = "{estimate}{stars}",
-  statistic = "({std.error})",
-  add_rows = data.frame(
-    term = c("Observations", "Contrôle"),
-    contrast = c("", ""),
-    `Sans risque + genre` = c(as.character(nobs(consent_military_exp_gender_only)), "Non"),
-    `Base + genre` = c(as.character(nobs(consent_military_exp_baseline)), "Non"),
-    `Avec contrôles* + genre` = c(as.character(nobs(consent_military_exp_controls)), "Oui"),
-    stringsAsFactors = FALSE,
-    check.names = FALSE
-  ),
-  gof_omit = ".*",
-  coef_omit = "pcs|matri|foyer|tailleagglo5|diplome|partisane",
-  notes = c(
-    "Liste des variables de contrôle : catégorie socio-professionnelle, situation matrimoniale, foyer, taille d'agglomération, diplôme et proximité partisane.",
-    "+ p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001.",
-    "Les coefficients présentés correspondent aux effets marginaux moyens estimés à partir de modèles probit pondérés par les poids de sondage. Les écarts-types robustes à l’hétéroscédasticité figurent entre parenthèses."
-  )
+write_defense_table(
+  path = file.path(table_dir, "defense_ame_baseline_controls.tex"),
+  ame_gender_only = ame_gender_only,
+  ame_baseline = ame_baseline,
+  ame_controls = ame_controls,
+  nobs_gender_only = as.character(nobs(consent_military_exp_gender_only)),
+  nobs_baseline = as.character(nobs(consent_military_exp_baseline)),
+  nobs_controls = as.character(nobs(consent_military_exp_controls))
 )
-postprocess_defense_table(file.path(table_dir, "defense_ame_baseline_controls.tex"))
-
-
 
 message("Table saved to: ", file.path(table_dir, "defense_ame_baseline_controls.tex"))
+
+
+# Table 1B: Core model plus controlled model with age2 ----
+
+consent_gender_only_altage <- copy(consent_comparison)
+consent_gender_only_altage[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
+consent_gender_only_altage[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
+consent_gender_only_altage[, gender := relevel_factor(gender, ref = "Femme", var_name = "gender")]
+consent_gender_only_altage[, acte_citoyen := relevel_factor(acte_citoyen, ref = "Pas du tout d’accord", var_name = "acte_citoyen")]
+consent_gender_only_altage[, tranche_revenus := relevel_income_factor(tranche_revenus)]
+consent_gender_only_altage[, age2 := relevel_age2_factor(age2)]
+
+consent_military_exp_gender_only_altage <- feglm(
+  militaryexp_binary ~ q30_q2 + q19 + age2 + acte_citoyen + tranche_revenus + gender,
+  family = binomial(link = "probit"),
+  vcov = "hetero",
+  weights = ~ weights,
+  data = consent_gender_only_altage
+)
+
+ame_gender_only_altage <- avg_slopes(
+  consent_military_exp_gender_only_altage,
+  newdata = consent_gender_only_altage,
+  wts = "weights"
+)
+
+consent_baseline_altage <- copy(consent_comparison)
+consent_baseline_altage[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
+consent_baseline_altage[, q35 := relevel_factor(q35, ref = "Très élevé", var_name = "q35")]
+consent_baseline_altage[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
+consent_baseline_altage[, gender := relevel_factor(gender, ref = "Femme", var_name = "gender")]
+consent_baseline_altage[, acte_citoyen := relevel_factor(acte_citoyen, ref = "Pas du tout d’accord", var_name = "acte_citoyen")]
+consent_baseline_altage[, tranche_revenus := relevel_income_factor(tranche_revenus)]
+consent_baseline_altage[, age2 := relevel_age2_factor(age2)]
+
+consent_military_exp_baseline_altage <- feglm(
+  militaryexp_binary ~ q30_q2 + q35 + q19 + age2 + acte_citoyen + tranche_revenus + gender,
+  family = binomial(link = "probit"),
+  vcov = "hetero",
+  weights = ~ weights,
+  data = consent_baseline_altage
+)
+
+ame_baseline_altage <- avg_slopes(
+  consent_military_exp_baseline_altage,
+  newdata = consent_baseline_altage,
+  wts = "weights"
+)
+
+consent_with_controls_altage <- copy(consent_comparison)
+consent_with_controls_altage[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
+consent_with_controls_altage[, q35 := relevel_factor(q35, ref = "Très élevé", var_name = "q35")]
+consent_with_controls_altage[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
+consent_with_controls_altage[, gender := relevel_factor(gender, ref = "Femme", var_name = "gender")]
+consent_with_controls_altage[, acte_citoyen := relevel_factor(acte_citoyen, ref = "Pas du tout d’accord", var_name = "acte_citoyen")]
+consent_with_controls_altage[, partisane := relevel_factor(partisane, ref = "Aucun", var_name = "partisane")]
+consent_with_controls_altage[, age2 := relevel_age2_factor(age2)]
+consent_with_controls_altage[
+  ,
+  `:=`(
+    pcs = relevel_factor(pcs, ref = "Retraité", var_name = "pcs"),
+    matri = factor(matri),
+    foyer = factor(foyer),
+    tailleagglo5 = factor(tailleagglo5),
+    tranche_revenus = relevel_income_factor(tranche_revenus),
+    diplome = factor(diplome)
+  )
+]
+
+consent_military_exp_controls_altage <- feglm(
+  militaryexp_binary ~ q30_q2 + q35 + q19 + pcs + matri + foyer +
+    age2 + acte_citoyen + tailleagglo5 + tranche_revenus +
+    diplome + partisane + gender,
+  family = binomial(link = "probit"),
+  vcov = "hetero",
+  weights = ~ weights,
+  data = consent_with_controls_altage
+)
+
+ame_controls_altage <- avg_slopes(
+  consent_military_exp_controls_altage,
+  newdata = consent_with_controls_altage,
+  wts = "weights"
+)
+ame_gender_only_altage <- order_main_table_rows(clean_ame_labels(ame_gender_only_altage))
+ame_baseline_altage <- order_main_table_rows(clean_ame_labels(ame_baseline_altage))
+ame_controls_altage <- order_main_table_rows(clean_ame_labels(ame_controls_altage))
+
+write_defense_table(
+  path = file.path(table_dir, "defense_ame_baseline_controls_altage.tex"),
+  ame_gender_only = ame_gender_only_altage,
+  ame_baseline = ame_baseline_altage,
+  ame_controls = ame_controls_altage,
+  nobs_gender_only = as.character(nobs(consent_military_exp_gender_only_altage)),
+  nobs_baseline = as.character(nobs(consent_military_exp_baseline_altage)),
+  nobs_controls = as.character(nobs(consent_military_exp_controls_altage)),
+  age_terms = "age_2",
+  age_reference_label = "18 à 24 ans",
+  age_display_labels = c(
+    "25 à 29 ans",
+    "30 à 34 ans",
+    "35 à 39 ans",
+    "40 à 44 ans",
+    "45 à 49 ans",
+    "50 à 54 ans",
+    "55 à 59 ans",
+    "60 à 64 ans",
+    "65 à 69 ans",
+    "70 ans et plus"
+  ),
+  note_text = paste(
+    "\\textbf{Note:} Les trois modèles incluent le genre, la variable catégorielle age_2, les revenus et l'acte citoyen.",
+    "Le modèle avec contrôles ajoute la catégorie socio-professionnelle, la situation matrimoniale, le foyer,",
+    "la taille d'agglomération, le diplôme et la proximité partisane.",
+    "Les coefficients présentés correspondent aux effets marginaux moyens estimés.",
+    "Les écarts-types robustes à l’hétéroscédasticité figurent entre parenthèses à côté des estimations.",
+    "Seuil de confiance : + p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001."
+  )
+)
+
+message("Table saved to: ", file.path(table_dir, "defense_ame_baseline_controls_altage.tex"))
 
 
 # Table 2A: Full q35 model, partisan reference = Aucun ----
@@ -574,7 +1061,7 @@ consent_q35_tres_eleve <- copy(consent)
 consent_q35_tres_eleve[, partisane := relevel_factor(partisane, ref = "Aucun", var_name = "partisane")]
 consent_q35_tres_eleve[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
 consent_q35_tres_eleve[, q35 := relevel_factor(q35, ref = "Très élevé", var_name = "q35")]
-consent_q35_tres_eleve[, q19 := relevel_factor(q19, ref = "Trop élevés", var_name = "q19")]
+consent_q35_tres_eleve[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
 
 consent_military_exp_q35_tres_eleve <- feglm(
   militaryexp_binary ~ q30_q2 + q35 + q19 + partisane,
@@ -608,6 +1095,7 @@ consent_partisane_renaissance <- copy(consent)
 consent_partisane_renaissance[, partisane := relevel_factor(partisane, ref = "Renaissance (ex-La République En Marche)", var_name = "partisane")]
 consent_partisane_renaissance[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
 consent_partisane_renaissance[, q35 := relevel_factor(q35, ref = "Très élevé", var_name = "q35")]
+consent_partisane_renaissance[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
 
 consent_military_exp_partisane_renaissance <- feglm(
   militaryexp_binary ~ q30_q2 + q35 + q19 + partisane,
@@ -685,7 +1173,7 @@ consent_interaction[, q30_q2 := factor(q30_q2, levels = c(
   "Tout à fait confiance"
 ))]
 consent_interaction[, q35_binary := factor(q35_binary, levels = c("Risque faible", "Risque élevé"))]
-consent_interaction[, q19 := relevel_factor(q19, ref = "Trop élevés", var_name = "q19")]
+consent_interaction[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
 
 consent_military_exp_interaction <- feglm(
   militaryexp_binary ~ q30_q2 * q35_binary + q19 + partisane,

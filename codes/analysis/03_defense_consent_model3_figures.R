@@ -14,11 +14,11 @@ suppressPackageStartupMessages({
 
 comparison_vars <- c(
   "militaryexp_binary", "q30_q2", "q35", "q19", "pcs", "matri", "foyer",
-  "continuous_age", "tailleagglo5", "tranche_revenus", "diplome", "partisane", "gender"
+  "continuous_age", "q23", "tailleagglo5", "tranche_revenus", "diplome", "partisane", "gender"
 )
 
 comparison_char_vars <- c(
-  "q30_q2", "q35", "q19", "pcs", "matri", "foyer",
+  "q30_q2", "q35", "q19", "q23", "pcs", "matri", "foyer",
   "tailleagglo5", "tranche_revenus", "diplome", "partisane", "gender"
 )
 
@@ -51,6 +51,9 @@ ideological_party_order <- c(
 
 non_party_order <- c("Ne sait pas")
 
+pooled_party_levels <- c("Aucun", "Ext. Gauche", "Gauche", "Centre", "Droite", "Extr. Droite", "Ne sait pas")
+pooled_party_plot_order <- c("Ext. Gauche", "Gauche", "Centre", "Droite", "Extr. Droite", "Ne sait pas")
+
 pcs_label_map <- c(
   "Agriculteur exploitant" = "Agriculteur",
   "Artisan, commerçant et assimilé, chef d’entreprise" = "Artisan / commerçant / chef d'entreprise",
@@ -64,6 +67,13 @@ pcs_label_map <- c(
   "Profession intermédiaire (technicien, contremaître, agent de maîtrise, professeur des écoles, instituteur, infirmier, éducateur ...)" = "Profession intermédiaire",
   "Profession libérale et assimilée" = "Profession libérale",
   "Retraité" = "Retraité"
+)
+
+diplome_label_map <- c(
+  "Sans diplôme / Primaire" = "Sans diplôme / primaire",
+  "Ecoles de commerce, grandes écoles" = "Grandes écoles",
+  "Supérieur à Bac +5" = "> Bac +5",
+  "Ne sait pas / Refus" = "NSP / refus"
 )
 
 
@@ -168,6 +178,59 @@ build_party_order <- function(labels) {
   )
 }
 
+add_partisane_pooled <- function(data) {
+  far_left_parties <- c(
+    "Le NPA (Nouveau Parti Anticapitaliste)",
+    "Lutte Ouvrière",
+    "Le Parti Communiste",
+    "La France Insoumise"
+  )
+  left_parties <- c(
+    "Les Ecologistes (ex-Europe Ecologie Les Verts)",
+    "Le Parti socialiste"
+  )
+  center_parties <- c(
+    "Renaissance (ex-La République En Marche)",
+    "Le MoDem",
+    "Horizons (d'Édouard Philippe)",
+    "L’UDI (Union des Démocrates et Indépendants)"
+  )
+  right_parties <- c(
+    "Les Républicains"
+  )
+  far_right_parties <- c(
+    "Debout la France (de Nicolas Dupont-Aignan)",
+    "Le Rassemblement National",
+    "Reconquête ! (d'Éric Zemmour)"
+  )
+
+  data[
+    ,
+    partisane_pooled := fcase(
+      as.character(partisane) %chin% far_left_parties, "Ext. Gauche",
+      as.character(partisane) %chin% left_parties, "Gauche",
+      as.character(partisane) %chin% center_parties, "Centre",
+      as.character(partisane) %chin% right_parties, "Droite",
+      as.character(partisane) %chin% far_right_parties, "Extr. Droite",
+      as.character(partisane) == "Aucun", "Aucun",
+      as.character(partisane) == "Ne sait pas", "Ne sait pas",
+      default = NA_character_
+    )
+  ]
+
+  unmapped <- data[is.na(partisane_pooled), sort(unique(as.character(partisane)))]
+  if (length(unmapped) > 0) {
+    stop(
+      "Unmapped party labels in partisane_pooled: ",
+      paste(unmapped, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  data[, partisane_pooled := factor(partisane_pooled, levels = pooled_party_levels)]
+  data
+}
+
 prepare_model3_sample <- function() {
   survey2025 <- fread(path_data_final("final_survey2025.csv"))[treatment == 0]
   survey2025 <- filter_valid_weights(survey2025)
@@ -183,12 +246,21 @@ prepare_model3_sample <- function() {
   consent_comparison <- consent_comparison[
     complete.cases(consent_comparison[, ..sample_vars])
   ]
+  consent_comparison[
+    ,
+    `:=`(
+      continuous_age_sq = continuous_age^2,
+      acte_citoyen = q23
+    )
+  ]
 
   consent_comparison[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
   consent_comparison[, q35 := relevel_factor(q35, ref = "Très élevé", var_name = "q35")]
-  consent_comparison[, q19 := relevel_factor(q19, ref = "Trop élevés", var_name = "q19")]
+  consent_comparison[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
   consent_comparison[, gender := relevel_factor(gender, ref = "Femme", var_name = "gender")]
+  consent_comparison[, acte_citoyen := relevel_factor(acte_citoyen, ref = "Pas du tout d’accord", var_name = "acte_citoyen")]
   consent_comparison[, partisane := relevel_factor(partisane, ref = "Aucun", var_name = "partisane")]
+  consent_comparison <- add_partisane_pooled(consent_comparison)
   consent_comparison[
     ,
     `:=`(
@@ -197,7 +269,7 @@ prepare_model3_sample <- function() {
       foyer = factor(foyer),
       tailleagglo5 = factor(tailleagglo5),
       tranche_revenus = relevel_income_factor(tranche_revenus),
-      diplome = factor(diplome)
+      diplome = relevel_factor(diplome, ref = "Bac", var_name = "diplome")
     )
   ]
 
@@ -207,7 +279,20 @@ prepare_model3_sample <- function() {
 fit_model3 <- function(data) {
   feglm(
     militaryexp_binary ~ q30_q2 + q35 + q19 + pcs + matri + foyer +
-      continuous_age + tailleagglo5 + tranche_revenus + diplome + partisane + gender,
+      continuous_age + continuous_age_sq + acte_citoyen + tailleagglo5 +
+      tranche_revenus + diplome + partisane + gender,
+    family = binomial(link = "probit"),
+    vcov = "hetero",
+    weights = ~ weights,
+    data = data
+  )
+}
+
+fit_model3_pooled_partisane <- function(data) {
+  feglm(
+    militaryexp_binary ~ q30_q2 + q35 + q19 + pcs + matri + foyer +
+      continuous_age + continuous_age_sq + acte_citoyen + tailleagglo5 +
+      tranche_revenus + diplome + partisane_pooled + gender,
     family = binomial(link = "probit"),
     vcov = "hetero",
     weights = ~ weights,
@@ -306,7 +391,6 @@ plot_ame_estimates <- function(plot_data,
       x = "Effet marginal moyen",
       y = NULL,
       caption = paste(
-        "Source : Baromètre opinion 2025.",
         "Modèle 3 du tableau central.",
         "Probit pondéré, IC à 95 %.",
         paste0("Groupe de référence : ", reference_group_label, ".")
@@ -319,10 +403,10 @@ plot_ame_estimates <- function(plot_data,
       panel.grid.minor = element_blank(),
       panel.grid.major.y = element_blank(),
       panel.grid.major.x = element_line(color = "#E5E7EB", linewidth = 0.45),
-      axis.text.x = element_text(color = "#374151", size = 11),
-      axis.text.y = element_text(color = "#374151", size = 11, lineheight = 0.95),
-      axis.title.x = element_text(color = "#111827", size = 12, margin = margin(t = 12)),
-      plot.caption = element_text(color = "#6B7280", size = 10, margin = margin(t = 14)),
+      axis.text.x = element_text(color = "#374151", size = 14),
+      axis.text.y = element_text(color = "#374151", size = 14, lineheight = 0.95),
+      axis.title.x = element_text(color = "#111827", size = 15, margin = margin(t = 12)),
+      plot.caption = element_text(color = "#6B7280", size = 12.5, margin = margin(t = 14)),
       plot.caption.position = "plot",
       plot.margin = margin(t = 18, r = 18, b = 18, l = 18)
     )
@@ -348,10 +432,18 @@ dir.create(figure_dir, recursive = TRUE, showWarnings = FALSE)
 
 consent_model3_sample <- prepare_model3_sample()
 consent_model3 <- fit_model3(consent_model3_sample)
+consent_model3_pooled_partisane <- fit_model3_pooled_partisane(consent_model3_sample)
 
 ame_model3 <- avg_slopes(
   consent_model3,
-  variables = c("pcs", "partisane"),
+  variables = c("pcs", "partisane", "diplome"),
+  newdata = consent_model3_sample,
+  wts = "weights"
+)
+
+ame_model3_pooled_partisane <- avg_slopes(
+  consent_model3_pooled_partisane,
+  variables = "partisane_pooled",
   newdata = consent_model3_sample,
   wts = "weights"
 )
@@ -370,6 +462,19 @@ party_plot_data <- prepare_ame_plot_data(
   order_levels = build_party_order(clean_party_labels(unique(as.character(consent_model3_sample$partisane))))
 )
 
+diplome_plot_data <- prepare_ame_plot_data(
+  ame = ame_model3,
+  term_name = "diplome",
+  label_map = diplome_label_map,
+  sort_by_estimate = TRUE
+)
+
+pooled_party_plot_data <- prepare_ame_plot_data(
+  ame = ame_model3_pooled_partisane,
+  term_name = "partisane_pooled",
+  order_levels = pooled_party_plot_order
+)
+
 plot_ame_estimates(
   plot_data = pcs_plot_data,
   output_file = output_path("figures", "defense_model3_ame_pcs.png"),
@@ -386,5 +491,23 @@ plot_ame_estimates(
   reference_group_label = "Aucun"
 )
 
+plot_ame_estimates(
+  plot_data = diplome_plot_data,
+  output_file = output_path("figures", "defense_model3_ame_diplome.png"),
+  font_family = font_family,
+  height = 7.2,
+  reference_group_label = "Bac"
+)
+
+plot_ame_estimates(
+  plot_data = pooled_party_plot_data,
+  output_file = output_path("figures", "defense_model3_ame_partisane_pooled.png"),
+  font_family = font_family,
+  height = 4.2,
+  reference_group_label = "Aucun"
+)
+
 message("Figures saved to: ", output_path("figures", "defense_model3_ame_pcs.png"))
 message("Figures saved to: ", output_path("figures", "defense_model3_ame_partisane.png"))
+message("Figures saved to: ", output_path("figures", "defense_model3_ame_diplome.png"))
+message("Figures saved to: ", output_path("figures", "defense_model3_ame_partisane_pooled.png"))

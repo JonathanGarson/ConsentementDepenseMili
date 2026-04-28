@@ -55,3 +55,10 @@ rsconnect/
 renv/library/
 renv/staging/
 .vscode/
+
+# data files
+*.csv
+
+# AI
+AGENTS.md
+empirical_econ_researcher_agent.md
