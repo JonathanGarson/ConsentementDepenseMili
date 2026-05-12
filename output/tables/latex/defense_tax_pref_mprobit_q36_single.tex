@@ -1,0 +1,82 @@
+\begin{table*}[!t]
+\centering
+\scriptsize \selectfont
+\setlength{\tabcolsep}{2pt}
+
+\begin{talltblr}[
+caption={Préférences de financement q36 parmi les répondants à choix unique},
+label={tab:defense_tax_pref_q36_mnp_single},
+note{}={\textbf{Note:} Modèle probit multinomial bayésien estimé avec MNP sur les répondants qui ont coché exactement une option q36. Chaque cellule présente un effet marginal moyen sur la probabilité que l'option soit le choix unique. Les quatre colonnes forment une distribution de probabilité et les effets marginaux d'un contraste somment approximativement à zéro. Le modèle inclut les mêmes variables affichées et contrôles additionnels que la table q36 principale. MNP ne prend pas de poids de vraisemblance ; les poids de sondage sont utilisés pour moyenner les effets marginaux prédits. Pour les variables continues, les cellules correspondent à une hausse d'une unité de variable standardisée. Les écarts-types ne sont pas reportés par défaut ; définir Q36_MNP_PRED_DRAWS > 1 pour résumer la dispersion postérieure prédite.},
+]{
+width=0.99\textwidth,
+\rowsep = 0pt,
+colspec={
+Q[l,wd=0.17\textwidth]
+Q[l,wd=0.18\textwidth]
+Q[c,wd=0.15\textwidth]
+Q[c,wd=0.15\textwidth]
+Q[c,wd=0.15\textwidth]
+Q[c,wd=0.15\textwidth]
+},
+column{3,4,5,6}={halign=c},
+column{1,2}={halign=l},
+row{1}={font=\bfseries},
+}
+\toprule
+& & Baisse dépenses & Hausse impôts & Déficit/dette & Temps travaillé \\
+\midrule
+\textbf{Confiance dans l'État} & Pas du tout confiance & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Plutôt pas confiance & \num{-0.036} & \num{0.023} & \num{0.011} & \num{0.002} \\
+ & Plutôt confiance & \num{0.008} & \num{0.002} & \num{0.000} & \num{-0.010} \\
+ & Tout à fait confiance & \num{0.099} & \num{-0.082} & \num{0.050} & \num{-0.067} \\
+\midrule
+\textbf{Risque de conflit} & NSP & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Très élevé & \num{0.022} & \num{-0.016} & \num{0.000} & \num{-0.006} \\
+ & Assez élevé & \num{0.038} & \num{-0.036} & \num{-0.028} & \num{0.026} \\
+ & Plutôt faible & \num{0.009} & \num{-0.021} & \num{0.028} & \num{-0.016} \\
+ & Très faible & \num{0.000} & \num{-0.029} & \num{0.028} & \num{0.001} \\
+\midrule
+\textbf{Niveau d'imposition} & Juste & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Trop élevés & \num{0.025} & \num{-0.027} & \num{-0.010} & \num{0.011} \\
+ & Pas assez & \num{-0.175} & \num{0.226} & \num{0.004} & \num{-0.055} \\
+\midrule
+\textbf{Impôt sur le revenu} & Non & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Oui & \num{-0.002} & \num{0.078} & \num{-0.026} & \num{-0.050} \\
+\midrule
+\textbf{Acte citoyen} & Pas du tout d'accord & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Plutôt pas d'accord & \num{0.074} & \num{-0.244} & \num{-0.039} & \num{0.208} \\
+ & Plutôt d'accord & \num{0.041} & \num{-0.171} & \num{-0.005} & \num{0.135} \\
+ & Tout à fait d'accord & \num{0.015} & \num{-0.100} & \num{-0.055} & \num{0.140} \\
+\midrule
+\textbf{Satisfaction argent public} & Pas du tout satisfait(e) & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Plutôt pas satisfait(e) & \num{-0.023} & \num{0.093} & \num{-0.020} & \num{-0.050} \\
+ & Plutôt satisfait(e) & \num{-0.057} & \num{0.101} & \num{-0.030} & \num{-0.014} \\
+ & Très satisfait(e) & \num{-0.049} & \num{0.116} & \num{0.010} & \num{-0.077} \\
+\midrule
+\textbf{Genre} & Femme & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Homme & \num{-0.028} & \num{-0.005} & \num{0.025} & \num{0.009} \\
+\midrule
+\textbf{Age} & Par écart-type & \num{0.059} & \num{-0.075} & \num{0.013} & \num{0.003} \\
+\midrule
+\textbf{Age\textsuperscript{2}} & Par unité standardisée & \num{0.003} & \num{-0.014} & \num{-0.009} & \num{0.020} \\
+\midrule
+\textbf{Revenus} & < 12k & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & 12k--18k & \num{-0.139} & \num{-0.001} & \num{0.160} & \num{-0.019} \\
+ & 18k--24k & \num{-0.075} & \num{-0.055} & \num{0.195} & \num{-0.065} \\
+ & 24k--36k & \num{-0.108} & \num{0.004} & \num{0.204} & \num{-0.100} \\
+ & 36k--48k & \num{-0.110} & \num{-0.032} & \num{0.242} & \num{-0.100} \\
+ & 48k--60k & \num{-0.098} & \num{-0.014} & \num{0.216} & \num{-0.104} \\
+ & 60k--72k & \num{-0.119} & \num{-0.040} & \num{0.267} & \num{-0.108} \\
+ & 72k--144k & \num{-0.162} & \num{0.090} & \num{0.168} & \num{-0.095} \\
+ & 144k+ & \num{0.031} & \num{-0.155} & \num{0.277} & \num{-0.153} \\
+ & NSP & \num{-0.200} & \num{0.129} & \num{0.245} & \num{-0.173} \\
+\midrule\midrule
+Observations & répondants & 1086 & 1086 & 1086 & 1086 \\
+Échantillon &  & Une seule réponse q36 & Une seule réponse q36 & Une seule réponse q36 & Une seule réponse q36 \\
+Contrôles additionnels &  & Oui & Oui & Oui & Oui \\
+Tirages MCMC &  & 500 & 500 & 500 & 500 \\
+Tirages prédiction &  & 1 & 1 & 1 & 1 \\
+Graine MCMC &  & 202508 & 202508 & 202508 & 202508 \\
+\bottomrule
+\end{talltblr}
+\end{table*}

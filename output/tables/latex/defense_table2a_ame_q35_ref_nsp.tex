@@ -1,0 +1,40 @@
+\begin{table}
+\centering
+\begin{talltblr}[         %% tabularray outer open
+caption={Table 2A. Modèle q35 détaillé, référence partisane Aucun},
+note{}={Average marginal effects from a weighted probit model using survey weights. q35 reference category is NSP. The model adjusts for tax-level views, party proximity, and satisfaction. Heteroskedasticity-robust SE in parentheses.},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]},
+column{3}={}{halign=c,},
+column{1,2}={}{halign=l,},
+}                     %% tabularray inner close
+\toprule
+&    & AME (Aucun) \\ \midrule %% TinyTableHeader
+q19 & Pas assez élevés - Ni trop, ni pas assez élevés & \num{-0.158}+ \\
+&  & (\num{0.091}) \\
+& Trop élevés - Ni trop, ni pas assez élevés & \num{-0.141}*** \\
+&  & (\num{0.039}) \\
+q30\_q2 & Plutôt pas confiance - Pas du tout confiance & \num{-0.004} \\
+&  & (\num{0.034}) \\
+& Plutôt confiance - Pas du tout confiance & \num{-0.150}*** \\
+&  & (\num{0.044}) \\
+& Tout à fait confiance - Pas du tout confiance & \num{-0.293}*** \\
+&  & (\num{0.065}) \\
+q35 & Très élevé - Vous ne savez pas & \num{-0.032} \\
+&  & (\num{0.068}) \\
+& Assez élevé - Vous ne savez pas & \num{0.042} \\
+&  & (\num{0.060}) \\
+& Plutôt faible - Vous ne savez pas & \num{-0.004} \\
+&  & (\num{0.064}) \\
+& Très faible - Vous ne savez pas & \num{-0.176}* \\
+&  & (\num{0.072}) \\
+sat & Plutôt pas satisfait(e) - Pas du tout satisfait(e) & \num{-0.011} \\
+&  & (\num{0.067}) \\
+& Plutôt satisfait(e) - Pas du tout satisfait(e) & \num{-0.013} \\
+&  & (\num{0.064}) \\
+& Très satisfait(e) - Pas du tout satisfait(e) & \num{-0.029} \\
+&  & (\num{0.079}) \\
+\bottomrule
+\end{talltblr}
+\end{table}

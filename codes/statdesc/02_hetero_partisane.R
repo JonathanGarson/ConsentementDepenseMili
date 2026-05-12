@@ -183,6 +183,31 @@ compute_weighted_shares <- function(survey, question, categories, party_order) {
   distribution
 }
 
+valid_q36_sample <- function(survey, option_labels) {
+  option_cols <- names(option_labels)
+  invalid_cols <- option_cols[
+    !vapply(
+      option_cols,
+      function(col) all(is.na(survey[[col]]) | survey[[col]] %in% c(0L, 1L)),
+      logical(1)
+    )
+  ]
+
+  if (length(invalid_cols) > 0L) {
+    stop("q36 columns must be coded 0/1: ", paste(invalid_cols, collapse = ", "), call. = FALSE)
+  }
+
+  q36_sample <- survey[
+    !is.na(weights) & weights > 0 & complete.cases(survey[, ..option_cols])
+  ]
+
+  if (nrow(q36_sample) == 0L) {
+    stop("No valid complete-case observations found for q36.", call. = FALSE)
+  }
+
+  q36_sample
+}
+
 # Compute overall weighted shares for each q36 multiple-response option.
 compute_q36_shares <- function(survey, option_labels) {
   shares <- rbindlist(
@@ -205,6 +230,127 @@ compute_q36_shares <- function(survey, option_labels) {
 
   shares[, option := factor(option, levels = unname(q36_option_labels))]
   shares
+}
+
+compute_q36_selection_counts <- function(survey, option_labels) {
+  option_cols <- names(option_labels)
+  q36_sample <- valid_q36_sample(survey, option_labels)
+  q36_sample[, selection_count := rowSums(.SD == 1L), .SDcols = option_cols]
+
+  distribution <- q36_sample[
+    ,
+    .(
+      weighted_n = sum(weights),
+      unweighted_n = .N
+    ),
+    by = selection_count
+  ]
+
+  distribution <- distribution[
+    data.table(selection_count = seq.int(0L, length(option_cols))),
+    on = "selection_count"
+  ]
+
+  distribution[is.na(weighted_n), weighted_n := 0]
+  distribution[is.na(unweighted_n), unweighted_n := 0L]
+  distribution[, share := weighted_n / sum(weighted_n)]
+  distribution[
+    ,
+    count_label := fifelse(
+      selection_count == 0L,
+      "0 réponse",
+      fifelse(selection_count == 1L, "1 réponse", paste(selection_count, "réponses"))
+    )
+  ]
+  distribution[, count_label := factor(count_label, levels = count_label)]
+  distribution[]
+}
+
+compute_q36_single_answer_distribution <- function(survey, option_labels) {
+  option_cols <- names(option_labels)
+  q36_sample <- valid_q36_sample(survey, option_labels)
+  q36_sample[, selection_count := rowSums(.SD == 1L), .SDcols = option_cols]
+  single_answer_sample <- q36_sample[selection_count == 1L]
+
+  if (nrow(single_answer_sample) == 0L) {
+    stop("No respondents selected exactly one q36 option.", call. = FALSE)
+  }
+
+  distribution <- rbindlist(
+    lapply(
+      option_cols,
+      function(option_col) {
+        data.table(
+          option = option_labels[[option_col]],
+          weighted_n = single_answer_sample[get(option_col) == 1L, sum(weights)],
+          unweighted_n = single_answer_sample[get(option_col) == 1L, .N]
+        )
+      }
+    )
+  )
+
+  distribution[is.na(weighted_n), weighted_n := 0]
+  distribution[is.na(unweighted_n), unweighted_n := 0L]
+  distribution[, share := weighted_n / sum(weighted_n)]
+  distribution[, option := factor(option, levels = rev(unname(option_labels)))]
+  distribution[]
+}
+
+compute_q36_pairwise_lift <- function(survey, option_labels) {
+  option_cols <- names(option_labels)
+  q36_sample <- valid_q36_sample(survey, option_labels)
+  total_weight <- q36_sample[, sum(weights)]
+
+  marginal_shares <- data.table(
+    option_col = option_cols,
+    option = unname(option_labels),
+    marginal_share = vapply(
+      option_cols,
+      function(option_col) q36_sample[get(option_col) == 1L, sum(weights)] / total_weight,
+      numeric(1)
+    )
+  )
+
+  zero_marginals <- marginal_shares[marginal_share <= 0 | is.na(marginal_share), option]
+  if (length(zero_marginals) > 0L) {
+    stop(
+      "Cannot compute q36 lift because at least one option has zero weighted selections: ",
+      paste(zero_marginals, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  pairwise <- rbindlist(
+    combn(
+      option_cols,
+      2L,
+      simplify = FALSE,
+      FUN = function(cols) {
+        option_a_col <- cols[[1L]]
+        option_b_col <- cols[[2L]]
+        option_a_share <- marginal_shares[option_col == option_a_col, marginal_share]
+        option_b_share <- marginal_shares[option_col == option_b_col, marginal_share]
+        observed_share <- q36_sample[
+          get(option_a_col) == 1L & get(option_b_col) == 1L,
+          sum(weights)
+        ] / total_weight
+        expected_share <- option_a_share * option_b_share
+
+        data.table(
+          option_a = option_labels[[option_a_col]],
+          option_b = option_labels[[option_b_col]],
+          observed_share = observed_share,
+          expected_share = expected_share,
+          lift = observed_share / expected_share
+        )
+      }
+    )
+  )
+
+  pairwise[, lift_label := sprintf("%.2f", lift)]
+  pairwise[, option_a := factor(option_a, levels = rev(unname(option_labels)))]
+  pairwise[, option_b := factor(option_b, levels = unname(option_labels))]
+  pairwise[]
 }
 
 # Compute weighted mean selection rates for q36 options by defense-support proxy.
@@ -369,6 +515,194 @@ plot_q36_distribution <- function(distribution,
     device = agg_png,
     width = 11.5,
     height = 6.8,
+    units = "in",
+    dpi = 320,
+    bg = "#FCFCF8"
+  )
+}
+
+plot_q36_selection_counts <- function(distribution,
+                                      output_file,
+                                      font_family) {
+  label_fun <- label_percent(accuracy = 0.1)
+
+  p <- ggplot(distribution, aes(x = count_label, y = share)) +
+    geom_col(
+      width = 0.62,
+      fill = "#2F855A",
+      color = "#FCFCF8",
+      linewidth = 0.3
+    ) +
+    geom_text(
+      aes(label = label_fun(share)),
+      vjust = -0.35,
+      family = font_family,
+      size = 5,
+      color = "#111827"
+    ) +
+    scale_y_continuous(
+      labels = label_percent(accuracy = 1),
+      expand = expansion(mult = c(0, 0.12))
+    ) +
+    labs(
+      x = "Nombre de réponses sélectionnées en q36",
+      y = "Part des répondants",
+      caption = paste(
+        "Pondération : poids de propension.",
+        "Champ : répondants avec indicateurs q36 complets."
+      )
+    ) +
+    coord_cartesian(clip = "off") +
+    theme_minimal(base_family = font_family) +
+    theme(
+      plot.background = element_rect(fill = "#ffffff", color = NA),
+      panel.background = element_rect(fill = "#ffffff", color = NA),
+      panel.grid.minor = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.major.y = element_line(color = "#E5E7EB", linewidth = 0.45),
+      axis.text.x = element_text(color = "#374151", size = 14),
+      axis.text.y = element_text(color = "#374151", size = 14),
+      axis.title.x = element_text(color = "#111827", size = 15, margin = margin(t = 12)),
+      axis.title.y = element_text(color = "#111827", size = 15, margin = margin(r = 12)),
+      plot.caption = element_text(color = "#6B7280", size = 12.5, margin = margin(t = 14)),
+      plot.caption.position = "plot",
+      plot.margin = margin(t = 18, r = 30, b = 18, l = 18)
+    )
+
+  ggsave(
+    filename = output_file,
+    plot = p,
+    device = agg_png,
+    width = 9.4,
+    height = 6.4,
+    units = "in",
+    dpi = 320,
+    bg = "#FCFCF8"
+  )
+}
+
+plot_q36_single_answer_distribution <- function(distribution,
+                                                output_file,
+                                                font_family) {
+  label_fun <- label_percent(accuracy = 0.1)
+
+  p <- ggplot(distribution, aes(x = share, y = option)) +
+    geom_col(
+      width = 0.62,
+      fill = "#2F855A",
+      color = "#FCFCF8",
+      linewidth = 0.3
+    ) +
+    geom_text(
+      aes(label = label_fun(share)),
+      hjust = -0.08,
+      family = font_family,
+      size = 5,
+      color = "#111827"
+    ) +
+    scale_x_continuous(
+      labels = label_percent(accuracy = 1),
+      expand = expansion(mult = c(0, 0.12))
+    ) +
+    scale_y_discrete(labels = label_wrap(34)) +
+    labs(
+      x = "Part des répondants avec une seule réponse",
+      y = NULL,
+      caption = paste(
+        "Pondération : poids de propension.",
+        "Champ : répondants ayant sélectionné exactement une option en q36."
+      )
+    ) +
+    coord_cartesian(clip = "off") +
+    theme_minimal(base_family = font_family) +
+    theme(
+      plot.background = element_rect(fill = "#ffffff", color = NA),
+      panel.background = element_rect(fill = "#ffffff", color = NA),
+      panel.grid.minor = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.major.x = element_line(color = "#E5E7EB", linewidth = 0.45),
+      axis.text.x = element_text(color = "#374151", size = 14),
+      axis.text.y = element_text(color = "#374151", size = 14, lineheight = 0.95),
+      axis.title.x = element_text(color = "#111827", size = 15, margin = margin(t = 12)),
+      plot.caption = element_text(color = "#6B7280", size = 12.5, margin = margin(t = 14)),
+      plot.caption.position = "plot",
+      plot.margin = margin(t = 18, r = 42, b = 18, l = 18)
+    )
+
+  ggsave(
+    filename = output_file,
+    plot = p,
+    device = agg_png,
+    width = 11.5,
+    height = 6.8,
+    units = "in",
+    dpi = 320,
+    bg = "#FCFCF8"
+  )
+}
+
+plot_q36_pairwise_lift <- function(association,
+                                   output_file,
+                                   font_family) {
+  p <- ggplot(association, aes(x = option_b, y = option_a, fill = lift)) +
+    geom_tile(
+      color = "#FCFCF8",
+      linewidth = 0.9
+    ) +
+    geom_text(
+      aes(label = lift_label),
+      family = font_family,
+      size = 5.2,
+      color = "#111827"
+    ) +
+    scale_fill_gradient2(
+      low = "#9CC9E2",
+      mid = "#F8FAFC",
+      high = "#14532D",
+      midpoint = 1,
+      labels = label_number(accuracy = 0.1),
+      name = "Lift"
+    ) +
+    scale_x_discrete(labels = label_wrap(24), drop = FALSE) +
+    scale_y_discrete(labels = label_wrap(24), drop = FALSE) +
+    labs(
+      x = NULL,
+      y = NULL,
+      caption = paste(
+        "Pondération : poids de propension.",
+        "Lift = co-sélection observée / co-sélection attendue sous indépendance ; 1 = indépendance."
+      )
+    ) +
+    coord_fixed(clip = "off") +
+    theme_minimal(base_family = font_family) +
+    theme(
+      plot.background = element_rect(fill = "#ffffff", color = NA),
+      panel.background = element_rect(fill = "#ffffff", color = NA),
+      panel.grid = element_blank(),
+      axis.text.x = element_text(
+        color = "#374151",
+        size = 9.2,
+        lineheight = 0.9,
+        angle = 45,
+        hjust = 1,
+        vjust = 1
+      ),
+      axis.text.y = element_text(color = "#374151", size = 12.5, lineheight = 0.95),
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_text(color = "#111827", size = 13),
+      legend.text = element_text(color = "#374151", size = 12),
+      plot.caption = element_text(color = "#6B7280", size = 12.5, margin = margin(t = 14)),
+      plot.caption.position = "plot",
+      plot.margin = margin(t = 18, r = 24, b = 90, l = 18)
+    )
+
+  ggsave(
+    filename = output_file,
+    plot = p,
+    device = agg_png,
+    width = 10.8,
+    height = 8.4,
     units = "in",
     dpi = 320,
     bg = "#FCFCF8"
@@ -549,3 +883,51 @@ plot_q36_by_support(
 )
 
 message("Figure saved to: ", q36_support_output_file)
+
+
+# Q36 multiple-response diagnostics ----
+
+q36_selection_count <- compute_q36_selection_counts(
+  survey = survey,
+  option_labels = q36_option_labels
+)
+
+q36_selection_count_output_file <- output_path("figures", "q36_selection_count.png")
+
+plot_q36_selection_counts(
+  distribution = q36_selection_count,
+  output_file = q36_selection_count_output_file,
+  font_family = font_family
+)
+
+message("Figure saved to: ", q36_selection_count_output_file)
+
+q36_single_answer_distribution <- compute_q36_single_answer_distribution(
+  survey = survey,
+  option_labels = q36_option_labels
+)
+
+q36_single_answer_output_file <- output_path("figures", "q36_single_answer_distribution.png")
+
+plot_q36_single_answer_distribution(
+  distribution = q36_single_answer_distribution,
+  output_file = q36_single_answer_output_file,
+  font_family = font_family
+)
+
+message("Figure saved to: ", q36_single_answer_output_file)
+
+q36_pairwise_lift <- compute_q36_pairwise_lift(
+  survey = survey,
+  option_labels = q36_option_labels
+)
+
+q36_pairwise_lift_output_file <- output_path("figures", "q36_pairwise_lift.png")
+
+plot_q36_pairwise_lift(
+  association = q36_pairwise_lift,
+  output_file = q36_pairwise_lift_output_file,
+  font_family = font_family
+)
+
+message("Figure saved to: ", q36_pairwise_lift_output_file)

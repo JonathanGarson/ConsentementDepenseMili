@@ -1,0 +1,72 @@
+\begin{table*}[!t]
+\centering
+\scriptsize \selectfont
+\setlength{\tabcolsep}{3pt}
+
+\begin{talltblr}[
+caption={Les déterminants du refus de baisser la dépense de défense (q35 détaillé)},
+label={tab:deter_consent_def_q35_detailed},
+note{}={\textbf{Note:} Les trois modèles incluent le genre, l'âge, l'âge au carré, les revenus, l'acte citoyen, Satisfaction Utilisation Argent Public, la satisfaction et le paiement de l'impôt sur le revenu. Les modèles 2 et 3 ajoutent les cinq réponses au risque de conflit, avec Très faible comme catégorie de référence. Le modèle avec contrôles ajoute la catégorie socio-professionnelle, la situation matrimoniale, le foyer, la taille d'agglomération, le diplôme et la proximité partisane. Les coefficients présentés correspondent aux effets marginaux moyens estimés. Les écarts-types robustes à l’hétéroscédasticité figurent entre parenthèses à côté des estimations. Seuil de confiance : + p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001.},
+]{
+width=0.97\textwidth,
+\rowsep = 0pt,
+colspec={
+Q[l,wd=0.22\textwidth]
+Q[l,wd=0.20\textwidth]
+Q[c,wd=0.16\textwidth]
+Q[c,wd=0.16\textwidth]
+Q[c,wd=0.16\textwidth]
+},
+column{3,4,5}={halign=c},
+column{1,2}={halign=l},
+row{1}={font=\bfseries},
+}
+\toprule
+& & \SetCell[c=3]{c} Refus de baisser la dépense de défense \\
+\midrule
+\textbf{Acte citoyen} & Pas du tout d’accord & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Plutôt pas d’accord & \num{0.146}* (\num{0.067}) & \num{0.120}+ (\num{0.068}) & \num{0.119}+ (\num{0.065}) \\
+ & Plutôt d’accord & \num{0.179}** (\num{0.058}) & \num{0.137}* (\num{0.060}) & \num{0.140}* (\num{0.060}) \\
+ & Tout à fait d’accord & \num{0.246}*** (\num{0.063}) & \num{0.203}** (\num{0.065}) & \num{0.216}*** (\num{0.065}) \\
+\midrule
+\textbf{Niveau d'imposition} & Juste & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Trop élevés & \num{-0.100}* (\num{0.042}) & \num{-0.098}* (\num{0.041}) & \num{-0.101}* (\num{0.042}) \\
+ & Pas assez & \num{-0.254}** (\num{0.093}) & \num{-0.241}** (\num{0.089}) & \num{-0.208}* (\num{0.096}) \\
+\midrule
+\textbf{Impôt sur le revenu} & Non & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Oui & \num{-0.024} (\num{0.037}) & \num{-0.017} (\num{0.037}) & \num{-0.014} (\num{0.038}) \\
+\midrule
+\textbf{Risque de conflit} & Très faible &  & \textit{Ref} & \textit{Ref} \\
+ & Plutôt faible &  & \num{0.182}*** (\num{0.054}) & \num{0.182}** (\num{0.056}) \\
+ & Assez élevé &  & \num{0.243}*** (\num{0.051}) & \num{0.232}*** (\num{0.052}) \\
+ & Très élevé &  & \num{0.152}* (\num{0.060}) & \num{0.132}* (\num{0.061}) \\
+ & NSP &  & \num{0.198}** (\num{0.074}) & \num{0.182}* (\num{0.075}) \\
+\midrule
+\textbf{Satisfaction Utilisation Argent Public} & Pas du tout satisfait(e) & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Plutôt pas satisfait(e) & \num{-0.030} (\num{0.036}) & \num{-0.046} (\num{0.035}) & \num{-0.025} (\num{0.036}) \\
+ & Plutôt satisfait(e) & \num{-0.157}*** (\num{0.043}) & \num{-0.173}*** (\num{0.043}) & \num{-0.155}*** (\num{0.045}) \\
+ & Très satisfait(e) & \num{-0.324}*** (\num{0.072}) & \num{-0.345}*** (\num{0.070}) & \num{-0.324}*** (\num{0.070}) \\
+\midrule
+\textbf{Genre} & Femme & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Homme & \num{0.000} (\num{0.030}) & \num{0.016} (\num{0.030}) & \num{0.022} (\num{0.031}) \\
+\midrule
+\textbf{Age} &  & \num{0.049}** (\num{0.015}) & \num{0.055}*** (\num{0.015}) & \num{0.033} (\num{0.028}) \\
+\midrule
+\textbf{Age\textsuperscript{2}} &  & \num{0.032}* (\num{0.016}) & \num{0.033}* (\num{0.015}) & \num{0.021} (\num{0.021}) \\
+\midrule
+\textbf{Revenus} & < 12k & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & 12k--18k & \num{-0.116}+ (\num{0.069}) & \num{-0.139}* (\num{0.069}) & \num{-0.115} (\num{0.071}) \\
+ & 18k--24k & \num{-0.032} (\num{0.065}) & \num{-0.052} (\num{0.065}) & \num{-0.044} (\num{0.069}) \\
+ & 24k--36k & \num{-0.029} (\num{0.061}) & \num{-0.054} (\num{0.061}) & \num{-0.012} (\num{0.068}) \\
+ & 36k--48k & \num{-0.014} (\num{0.064}) & \num{-0.035} (\num{0.064}) & \num{0.021} (\num{0.073}) \\
+ & 48k--60k & \num{0.022} (\num{0.068}) & \num{0.008} (\num{0.068}) & \num{0.066} (\num{0.078}) \\
+ & 60k--72k & \num{-0.061} (\num{0.080}) & \num{-0.088} (\num{0.080}) & \num{-0.017} (\num{0.089}) \\
+ & 72k--144k & \num{-0.056} (\num{0.091}) & \num{-0.070} (\num{0.091}) & \num{0.009} (\num{0.098}) \\
+ & 144k+ & \num{-0.238} (\num{0.162}) & \num{-0.255}+ (\num{0.153}) & \num{-0.144} (\num{0.171}) \\
+ & NSP & \num{0.002} (\num{0.112}) & \num{-0.039} (\num{0.116}) & \num{0.041} (\num{0.121}) \\
+\midrule\midrule
+Observations &  & 1179 & 1179 & 1179 \\
+Contrôle &  & Non & Non & Oui \\
+\bottomrule
+\end{talltblr}
+\end{table*}

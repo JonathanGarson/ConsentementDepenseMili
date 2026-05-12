@@ -26,6 +26,8 @@ The project keeps source data, intermediate outputs, code, and final outputs in 
 ├── output/
 │   ├── figures/
 │   └── tables/
+│       ├── html/
+│       └── latex/
 ├── renv/
 ├── resources/
 ├── .gitignore
@@ -38,7 +40,7 @@ The project keeps source data, intermediate outputs, code, and final outputs in 
 - `data/temp/` is reserved for temporary files created during future processing steps.
 - `data/final/` contains cleaned and analysis-ready datasets produced by the scripts. These files are regenerated from `data/raw/`.
 - `output/figures/` stores figures created by the descriptive and analysis scripts.
-- `output/tables/` stores regression tables, post-LASSO tables, and other tabular outputs created by the analysis scripts.
+- `output/tables/` stores tabular outputs created by the analysis scripts. LaTeX tables are written to `output/tables/latex/`, HTML tables are written to `output/tables/html/`, and CSV summaries remain in `output/tables/`.
 - `resources/` stores auxiliary files that support the project, such as crosswalks.
 - `renv/` contains the project-local reproducibility infrastructure created by `renv`.
 - `latex_files/` contains the note drafting material already present in this repository.
@@ -104,13 +106,22 @@ Rscript codes/statdesc/04_defense_expenditure_pref.R
 
 Rscript codes/analysis/01_defense_consent.R
 Rscript codes/analysis/02_otherexp_consent.R
-Rscript codes/analysis/03_defense_consent_model3_figures.R
-Rscript codes/analysis/04_lasso.R
+Rscript codes/analysis/03_defense_tax_pref.R
+Rscript codes/analysis/04_defense_consent_model3_figures.R
+Rscript codes/analysis/05_lasso.R
 ```
 
 Do not use `Rscript --vanilla`, because that skips the project `.Rprofile` and the path helper functions.
 
-The generation scripts write cleaned datasets to `data/final/`. The descriptive scripts write figures to `output/figures/`. The analysis scripts write LaTeX tables, CSV summary outputs, and model figures to `output/tables/` and `output/figures/`.
+The q36 multivariate probit companion model is intentionally not run by default because it is much slower than the main q36 models. To export it, run:
+
+```bash
+Q36_RUN_MVPROBIT=true Rscript codes/analysis/03_defense_tax_pref.R
+```
+
+The optional settings `Q36_MVPROBIT_NGHK`, `Q36_MVPROBIT_ITERLIM`, `Q36_MNP_DRAWS`, `Q36_MNP_BURNIN`, `Q36_MNP_SEED`, and `Q36_MNP_PRED_DRAWS` control the mvProbit simulation budget, the single-choice MNP sampler, and posterior-prediction summaries.
+
+The generation scripts write cleaned datasets to `data/final/`. The descriptive scripts write figures to `output/figures/`. The analysis scripts write LaTeX tables to `output/tables/latex/`, HTML tables to `output/tables/html/`, CSV summary outputs to `output/tables/`, and model figures to `output/figures/`.
 
 The scripts are designed to stop with explicit errors if required files, required columns, or valid positive survey weights are missing.
 
@@ -120,13 +131,14 @@ The scripts are designed to stop with explicit errors if required files, require
 - `codes/generate/02_gen_share_gdp.R` reads the `Share of GDP` sheet from `data/raw/SIPRI.xlsx` and exports a country-year panel to `data/final/share_gdp.csv`.
 - `codes/generate/03_gen_share_expenditure.R` reads the `Share of Govt. spending` sheet from `data/raw/SIPRI.xlsx` and exports a country-year panel to `data/final/share_expenditure.csv`.
 - `codes/statdesc/01_miliexpenditure.R` reads the two SIPRI-derived final datasets and creates comparative military expenditure figures.
-- `codes/statdesc/02_hetero_partisane.R` reads `final_survey2025.csv` and creates figures on partisan heterogeneity, preferred financing of higher military spending, and financing preferences by defence-spending support.
+- `codes/statdesc/02_hetero_partisane.R` reads `final_survey2025.csv` and creates figures on partisan heterogeneity, preferred financing of higher military spending, multiple q36 selections, and financing preferences by defence-spending support.
 - `codes/statdesc/03_taxpreference.R` creates the descriptive figure on preferred taxes among respondents who support financing higher military spending through taxes.
 - `codes/statdesc/04_defense_expenditure_pref.R` creates the descriptive figure on preferences about lowering military spending.
-- `codes/analysis/01_defense_consent.R` estimates the main weighted probit models for refusal to lower defence spending and exports the main average marginal effect tables.
-- `codes/analysis/02_otherexp_consent.R` mirrors the defence-spending analysis for health, pension, and poverty expenditure outcomes.
-- `codes/analysis/03_defense_consent_model3_figures.R` refits the controlled defence model and exports average marginal effect figures for social group, party proximity, pooled party proximity, and diploma categories.
-- `codes/analysis/04_lasso.R` screens respondent characteristics with weighted logistic LASSO, refits selected specifications as weighted probits, and exports selected-variable and post-LASSO tables.
+- `codes/analysis/01_defense_consent.R` estimates the main weighted probit models for refusal to lower defence spending and exports LaTeX and HTML average marginal effect tables; the main tables include income-tax payer status (`q5`) and respondent satisfaction (`sat`).
+- `codes/analysis/02_otherexp_consent.R` compares the controlled defence-spending specification across defence, health, pension, and poverty expenditure outcomes on a common sample; specifications include respondent satisfaction (`sat`).
+- `codes/analysis/03_defense_tax_pref.R` estimates q36 funding-choice models: the main mixed binary probit, a single-answer multinomial probit, a stacked binary probit with respondent-clustered standard errors, and an optional multivariate probit companion model.
+- `codes/analysis/04_defense_consent_model3_figures.R` refits the controlled defence model, including respondent satisfaction (`sat`), and exports average marginal effect figures for social group, party proximity, pooled party proximity, and diploma categories.
+- `codes/analysis/05_lasso.R` screens respondent characteristics with weighted logistic LASSO, refits selected specifications as weighted probits, and exports selected-variable and post-LASSO tables.
 
 ### 3.3 Data outputs produced by each code
 
@@ -140,10 +152,11 @@ The scripts are designed to stop with explicit errors if required files, require
 | `codes/statdesc/02_hetero_partisane.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces figures only. |
 | `codes/statdesc/03_taxpreference.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces a figure only. |
 | `codes/statdesc/04_defense_expenditure_pref.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces a figure only. |
-| `codes/analysis/01_defense_consent.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces LaTeX tables. |
-| `codes/analysis/02_otherexp_consent.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces a LaTeX table. |
-| `codes/analysis/03_defense_consent_model3_figures.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces model figures. |
-| `codes/analysis/04_lasso.R` | `lasso_selected_variables.csv` | `output/tables/` | Summary of selected LASSO source variables by specification and lambda choice. |
+| `codes/analysis/01_defense_consent.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces LaTeX and HTML tables. |
+| `codes/analysis/02_otherexp_consent.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces LaTeX and HTML tables. |
+| `codes/analysis/03_defense_tax_pref.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces LaTeX and HTML tables. |
+| `codes/analysis/04_defense_consent_model3_figures.R` | No dataset output | `-` | This script consumes `final_survey2025.csv` and produces model figures. |
+| `codes/analysis/05_lasso.R` | `lasso_selected_variables.csv` | `output/tables/` | Summary of selected LASSO source variables by specification and lambda choice. |
 
 ### 3.4 Tables and figures produced by each code
 
@@ -155,23 +168,36 @@ The scripts are designed to stop with explicit errors if required files, require
 | `codes/statdesc/02_hetero_partisane.R` | `hetero_partisane_q30_q2.png` | `output/figures/` | Weighted distribution of trust in the state by partisan proximity. |
 | `codes/statdesc/02_hetero_partisane.R` | `q36_effort_militaire.png` | `output/figures/` | Weighted shares for preferred ways to finance higher military spending. |
 | `codes/statdesc/02_hetero_partisane.R` | `q36_effort_militaire_by_support.png` | `output/figures/` | Weighted q36 financing preferences by support for maintaining military spending. |
+| `codes/statdesc/02_hetero_partisane.R` | `q36_selection_count.png` | `output/figures/` | Weighted distribution of the number of q36 financing options selected per respondent. |
+| `codes/statdesc/02_hetero_partisane.R` | `q36_single_answer_distribution.png` | `output/figures/` | Weighted distribution of the selected q36 option among respondents giving exactly one answer. |
+| `codes/statdesc/02_hetero_partisane.R` | `q36_pairwise_lift.png` | `output/figures/` | Weighted pairwise lift for q36 financing options, comparing observed co-selections with expected co-selections under independence. |
 | `codes/statdesc/03_taxpreference.R` | `q37_taxpreference.png` | `output/figures/` | Preferred tax instruments among respondents selecting tax or contribution increases for q36. |
 | `codes/statdesc/04_defense_expenditure_pref.R` | `q34_defense_expenditure_pref.png` | `output/figures/` | Weighted distribution of preferences about lowering military spending. |
-| `codes/analysis/01_defense_consent.R` | `defense_ame_baseline_controls.tex` | `output/tables/` | Main LaTeX table of average marginal effects from weighted probit models with continuous age. |
-| `codes/analysis/01_defense_consent.R` | `defense_ame_baseline_controls_altage.tex` | `output/tables/` | Alternative LaTeX table using categorical age groups. |
-| `codes/analysis/02_otherexp_consent.R` | `otherexp_ame_baseline.tex` | `output/tables/` | LaTeX table for refusal to lower health, pension, and poverty expenditure. |
-| `codes/analysis/03_defense_consent_model3_figures.R` | `defense_model3_ame_pcs.png` | `output/figures/` | Average marginal effects from model 3 by socio-professional category. |
-| `codes/analysis/03_defense_consent_model3_figures.R` | `defense_model3_ame_partisane.png` | `output/figures/` | Average marginal effects from model 3 by detailed partisan proximity. |
-| `codes/analysis/03_defense_consent_model3_figures.R` | `defense_model3_ame_partisane_pooled.png` | `output/figures/` | Average marginal effects from model 3 by pooled partisan proximity. |
-| `codes/analysis/03_defense_consent_model3_figures.R` | `defense_model3_ame_diplome.png` | `output/figures/` | Average marginal effects from model 3 by diploma category. |
-| `codes/analysis/04_lasso.R` | `lasso_postlasso_ame_01_attitudes.tex` | `output/tables/` | Post-LASSO weighted probit AME table for attitude variables. |
-| `codes/analysis/04_lasso.R` | `lasso_postlasso_ame_02_demographie.tex` | `output/tables/` | Post-LASSO weighted probit AME table for demographic variables. |
-| `codes/analysis/04_lasso.R` | `lasso_postlasso_ame_03_revenus_activite.tex` | `output/tables/` | Post-LASSO weighted probit AME table for income and activity variables. |
-| `codes/analysis/04_lasso.R` | `lasso_postlasso_ame_04_diplome_pcs.tex` | `output/tables/` | Post-LASSO weighted probit AME table for diploma, education, and socio-professional category variables. |
-| `codes/analysis/04_lasso.R` | `lasso_postlasso_ame_05_politique.tex` | `output/tables/` | Post-LASSO weighted probit AME table for political variables. |
-| `codes/analysis/04_lasso.R` | `lasso_postlasso_ame_06_territoire.tex` | `output/tables/` | Post-LASSO weighted probit AME table for territorial variables. |
+| `codes/analysis/01_defense_consent.R` | `defense_ame_baseline_controls.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Main average marginal effects table with continuous age, q5 yes/no only, q28, satisfaction controls, and q35 collapsed into high/low risk with `Risque faible` as reference. |
+| `codes/analysis/01_defense_consent.R` | `defense_ame_baseline_controls_q35_detailed.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Main average marginal effects table with continuous age, q5 yes/no only, q28, satisfaction controls, and all five q35 responses with `Très faible` as reference. |
+| `codes/analysis/01_defense_consent.R` | `defense_ame_baseline_controls_q35_detailed_ref_nsp.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Alternative detailed q35 table with the same specification as `defense_ame_baseline_controls_q35_detailed` but `NSP` as the q35 reference category. |
+| `codes/analysis/01_defense_consent.R` | `defense_ame_baseline_controls_altage.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Alternative main table using categorical age groups, q5 yes/no only, satisfaction controls, and q35 referenced to NSP. |
+| `codes/analysis/01_defense_consent.R` | `defense_table2a_ame_q35_ref_nsp.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | AME table for the detailed q35 model with partisan reference `Aucun` and q35 reference NSP. |
+| `codes/analysis/01_defense_consent.R` | `defense_table2b_ame_partisane_renaissance_q35_ref_nsp.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | AME table for the detailed q35 model with partisan reference `Renaissance` and q35 reference NSP. |
+| `codes/analysis/01_defense_consent.R` | `defense_table3_ame_q35_binary.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | AME table for the binary perceived-conflict-risk specification. |
+| `codes/analysis/01_defense_consent.R` | `defense_table4_interaction_q30_q35_binary.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Predicted-probability table for the q30 by binary-risk interaction. |
+| `codes/analysis/02_otherexp_consent.R` | `otherexp_ame_baseline.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Table comparing refusal to lower defence, health, pension, and poverty expenditure with the detailed model-3 defense specification on a common sample. |
+| `codes/analysis/03_defense_tax_pref.R` | `defense_tax_pref_ame_q36_glmm.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Main mixed-probit AME table showing how covariates shift each q36 funding option while keeping multiple responses. |
+| `codes/analysis/03_defense_tax_pref.R` | `defense_tax_pref_mprobit_q36_single.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Multinomial probit AME table among respondents who selected exactly one q36 option. |
+| `codes/analysis/03_defense_tax_pref.R` | `defense_tax_pref_binary_q36_clustered.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Stacked binary probit AME table with respondent-clustered standard errors. |
+| `codes/analysis/03_defense_tax_pref.R` | `defense_tax_pref_mvprobit_q36.{tex,html}` | `output/tables/latex/`, `output/tables/html/` | Optional multivariate probit AME table for the four q36 binary options, exported when `Q36_RUN_MVPROBIT=true`. |
+| `codes/analysis/04_defense_consent_model3_figures.R` | `defense_model3_ame_pcs.png` | `output/figures/` | Average marginal effects from model 3 by socio-professional category. |
+| `codes/analysis/04_defense_consent_model3_figures.R` | `defense_model3_ame_partisane.png` | `output/figures/` | Average marginal effects from model 3 by detailed partisan proximity. |
+| `codes/analysis/04_defense_consent_model3_figures.R` | `defense_model3_ame_partisane_pooled.png` | `output/figures/` | Average marginal effects from model 3 by pooled partisan proximity. |
+| `codes/analysis/04_defense_consent_model3_figures.R` | `defense_model3_ame_diplome.png` | `output/figures/` | Average marginal effects from model 3 by diploma category. |
+| `codes/analysis/05_lasso.R` | `lasso_postlasso_ame_01_attitudes.tex` | `output/tables/latex/` | Post-LASSO weighted probit AME table for attitude variables. |
+| `codes/analysis/05_lasso.R` | `lasso_postlasso_ame_02_demographie.tex` | `output/tables/latex/` | Post-LASSO weighted probit AME table for demographic variables. |
+| `codes/analysis/05_lasso.R` | `lasso_postlasso_ame_03_revenus_activite.tex` | `output/tables/latex/` | Post-LASSO weighted probit AME table for income and activity variables. |
+| `codes/analysis/05_lasso.R` | `lasso_postlasso_ame_04_diplome_pcs.tex` | `output/tables/latex/` | Post-LASSO weighted probit AME table for diploma, education, and socio-professional category variables. |
+| `codes/analysis/05_lasso.R` | `lasso_postlasso_ame_05_politique.tex` | `output/tables/latex/` | Post-LASSO weighted probit AME table for political variables. |
+| `codes/analysis/05_lasso.R` | `lasso_postlasso_ame_06_territoire.tex` | `output/tables/latex/` | Post-LASSO weighted probit AME table for territorial variables. |
 
-Some exploratory or legacy HTML files may also be present in `output/tables/` after local work. The files listed above are the documented outputs of the current replication pipeline.
+Some exploratory or legacy files may also be present after local work. The files listed above are the documented outputs of the current replication pipeline.
 
 ### 3.5 Optional: publish the repository to GitHub
 

@@ -14,12 +14,13 @@ suppressPackageStartupMessages({
 
 comparison_vars <- c(
   "militaryexp_binary", "q30_q2", "q35", "q19", "pcs", "matri", "foyer",
-  "continuous_age", "q23", "tailleagglo5", "tranche_revenus", "diplome", "partisane", "gender"
+  "continuous_age", "q23", "tailleagglo5", "tranche_revenus", "diplome",
+  "partisane", "gender", "sat"
 )
 
 comparison_char_vars <- c(
   "q30_q2", "q35", "q19", "q23", "pcs", "matri", "foyer",
-  "tailleagglo5", "tranche_revenus", "diplome", "partisane", "gender"
+  "tailleagglo5", "tranche_revenus", "diplome", "partisane", "gender", "sat"
 )
 
 party_label_map <- c(
@@ -110,6 +111,56 @@ relevel_factor <- function(x, ref, var_name) {
   }
 
   relevel(x, ref = ref)
+}
+
+relevel_q30_factor <- function(x) {
+  q30_levels <- c(
+    "Pas du tout confiance",
+    "Plutôt pas confiance",
+    "Plutôt confiance",
+    "Tout à fait confiance"
+  )
+  x_chr <- as.character(x)
+  unexpected <- setdiff(unique(na.omit(x_chr)), q30_levels)
+
+  if (length(unexpected) > 0L) {
+    stop(
+      "Unexpected level(s) in q30_q2: ",
+      paste(unexpected, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  if (!q30_levels[1] %chin% x_chr) {
+    stop("Reference level '", q30_levels[1], "' not found in q30_q2", call. = FALSE)
+  }
+
+  factor(x_chr, levels = q30_levels)
+}
+
+relevel_sat_factor <- function(x) {
+  sat_levels <- c(
+    "Pas du tout satisfait(e)",
+    "Plutôt pas satisfait(e)",
+    "Plutôt satisfait(e)",
+    "Très satisfait(e)"
+  )
+  x_chr <- as.character(x)
+  unexpected <- setdiff(unique(na.omit(x_chr)), sat_levels)
+
+  if (length(unexpected) > 0L) {
+    stop(
+      "Unexpected level(s) in sat: ",
+      paste(unexpected, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  if (!sat_levels[1] %chin% x_chr) {
+    stop("Reference level '", sat_levels[1], "' not found in sat", call. = FALSE)
+  }
+
+  factor(x_chr, levels = sat_levels)
 }
 
 relevel_income_factor <- function(x) {
@@ -254,12 +305,13 @@ prepare_model3_sample <- function() {
     )
   ]
 
-  consent_comparison[, q30_q2 := relevel_factor(q30_q2, ref = "Pas du tout confiance", var_name = "q30_q2")]
+  consent_comparison[, q30_q2 := relevel_q30_factor(q30_q2)]
   consent_comparison[, q35 := relevel_factor(q35, ref = "Très élevé", var_name = "q35")]
   consent_comparison[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
   consent_comparison[, gender := relevel_factor(gender, ref = "Femme", var_name = "gender")]
   consent_comparison[, acte_citoyen := relevel_factor(acte_citoyen, ref = "Pas du tout d’accord", var_name = "acte_citoyen")]
   consent_comparison[, partisane := relevel_factor(partisane, ref = "Aucun", var_name = "partisane")]
+  consent_comparison[, sat := relevel_sat_factor(sat)]
   consent_comparison <- add_partisane_pooled(consent_comparison)
   consent_comparison[
     ,
@@ -280,7 +332,7 @@ fit_model3 <- function(data) {
   feglm(
     militaryexp_binary ~ q30_q2 + q35 + q19 + pcs + matri + foyer +
       continuous_age + continuous_age_sq + acte_citoyen + tailleagglo5 +
-      tranche_revenus + diplome + partisane + gender,
+      tranche_revenus + diplome + partisane + gender + sat,
     family = binomial(link = "probit"),
     vcov = "hetero",
     weights = ~ weights,
@@ -292,7 +344,7 @@ fit_model3_pooled_partisane <- function(data) {
   feglm(
     militaryexp_binary ~ q30_q2 + q35 + q19 + pcs + matri + foyer +
       continuous_age + continuous_age_sq + acte_citoyen + tailleagglo5 +
-      tranche_revenus + diplome + partisane_pooled + gender,
+      tranche_revenus + diplome + partisane_pooled + gender + sat,
     family = binomial(link = "probit"),
     vcov = "hetero",
     weights = ~ weights,

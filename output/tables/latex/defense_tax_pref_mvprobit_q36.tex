@@ -1,0 +1,88 @@
+\begin{table*}[!t]
+\centering
+\scriptsize \selectfont
+\setlength{\tabcolsep}{2pt}
+
+\begin{talltblr}[
+caption={Préférences de financement q36, probit multivarié},
+label={tab:defense_tax_pref_q36_mvprobit},
+note{}={\textbf{Note:} Modèle probit multivarié estimé au niveau répondant avec les quatre options q36 comme variables dépendantes binaires conjointes. Chaque équation inclut les mêmes variables affichées et contrôles additionnels que la table q36 principale. Les effets marginaux affichés portent sur les probabilités marginales de sélection de chaque option. La matrice de corrélations latentes résume la dépendance résiduelle entre options. mvProbit ne prend pas de poids de vraisemblance ; les poids de sondage sont utilisés pour moyenner les effets marginaux prédits. Les écarts-types des effets marginaux ne sont pas reportés dans cette table exploratoire. Age et age au carré sont standardisés.},
+]{
+width=0.99\textwidth,
+\rowsep = 0pt,
+colspec={
+Q[l,wd=0.17\textwidth]
+Q[l,wd=0.18\textwidth]
+Q[c,wd=0.15\textwidth]
+Q[c,wd=0.15\textwidth]
+Q[c,wd=0.15\textwidth]
+Q[c,wd=0.15\textwidth]
+},
+column{3,4,5,6}={halign=c},
+column{1,2}={halign=l},
+row{1}={font=\bfseries},
+}
+\toprule
+& & Baisse dépenses & Hausse impôts & Déficit/dette & Temps travaillé \\
+\midrule
+\textbf{Confiance dans l'État} & Pas du tout confiance & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Plutôt pas confiance & \num{-0.046} & \num{0.002} & \num{-0.041} & \num{0.029} \\
+ & Plutôt confiance & \num{-0.010} & \num{0.018} & \num{-0.035} & \num{0.009} \\
+ & Tout à fait confiance & \num{-0.101} & \num{-0.013} & \num{0.079} & \num{0.064} \\
+\midrule
+\textbf{Risque de conflit} & NSP & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Très élevé & \num{0.008} & \num{0.058} & \num{-0.006} & \num{0.094} \\
+ & Assez élevé & \num{-0.015} & \num{0.047} & \num{0.006} & \num{0.087} \\
+ & Plutôt faible & \num{0.013} & \num{0.028} & \num{-0.005} & \num{0.009} \\
+ & Très faible & \num{0.001} & \num{-0.064} & \num{0.119} & \num{-0.017} \\
+\midrule
+\textbf{Niveau d'imposition} & Juste & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Trop élevés & \num{0.086} & \num{-0.079} & \num{0.005} & \num{-0.033} \\
+ & Pas assez & \num{-0.430} & \num{0.197} & \num{-0.006} & \num{-0.136} \\
+\midrule
+\textbf{Impôt sur le revenu} & Non & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Oui & \num{0.036} & \num{-0.005} & \num{-0.007} & \num{-0.067} \\
+\midrule
+\textbf{Acte citoyen} & Pas du tout d'accord & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Plutôt pas d'accord & \num{0.101} & \num{-0.135} & \num{-0.037} & \num{-0.013} \\
+ & Plutôt d'accord & \num{0.073} & \num{-0.135} & \num{-0.062} & \num{-0.022} \\
+ & Tout à fait d'accord & \num{0.082} & \num{-0.064} & \num{-0.088} & \num{0.010} \\
+\midrule
+\textbf{Satisfaction argent public} & Pas du tout satisfait(e) & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Plutôt pas satisfait(e) & \num{-0.050} & \num{0.025} & \num{0.037} & \num{-0.009} \\
+ & Plutôt satisfait(e) & \num{-0.168} & \num{0.029} & \num{0.082} & \num{0.119} \\
+ & Très satisfait(e) & \num{-0.235} & \num{0.005} & \num{0.172} & \num{0.049} \\
+\midrule
+\textbf{Genre} & Femme & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & Homme & \num{-0.018} & \num{0.033} & \num{0.010} & \num{0.050} \\
+\midrule
+\textbf{Age} & Par écart-type & \num{0.052} & \num{-0.037} & \num{-0.044} & \num{0.008} \\
+\midrule
+\textbf{Age\textsuperscript{2}} & Par unité standardisée & \num{-0.022} & \num{-0.012} & \num{0.024} & \num{0.005} \\
+\midrule
+\textbf{Revenus} & < 12k & \textit{Ref} & \textit{Ref} & \textit{Ref} & \textit{Ref} \\
+ & 12k--18k & \num{-0.056} & \num{0.002} & \num{0.038} & \num{0.064} \\
+ & 18k--24k & \num{0.149} & \num{0.000} & \num{-0.044} & \num{-0.010} \\
+ & 24k--36k & \num{0.069} & \num{0.030} & \num{0.041} & \num{0.011} \\
+ & 36k--48k & \num{0.072} & \num{-0.021} & \num{0.001} & \num{0.009} \\
+ & 48k--60k & \num{0.091} & \num{-0.039} & \num{0.008} & \num{-0.005} \\
+ & 60k--72k & \num{0.063} & \num{-0.065} & \num{0.007} & \num{-0.005} \\
+ & 72k--144k & \num{0.040} & \num{0.002} & \num{0.067} & \num{-0.049} \\
+ & 144k+ & \num{0.407} & \num{-0.117} & \num{-0.091} & \num{-0.051} \\
+ & NSP & \num{0.008} & \num{0.016} & \num{0.274} & \num{-0.044} \\
+\midrule\midrule
+Observations & répondants & 1313 & 1313 & 1313 & 1313 \\
+Contrôles additionnels &  & Oui & Oui & Oui & Oui \\
+Simulations GHK &  & 3 & 3 & 3 & 3 \\
+Itérations max &  & 1 & 1 & 1 & 1 \\
+Itérations utilisées &  & 1 & 1 & 1 & 1 \\
+Code convergence & Iteration limit exceeded (iterlim) & 4 & 4 & 4 & 4 \\
+Corrélations latentes & Baisse dépenses - Hausse impôts & -0.339 &  &  &  \\
+ & Baisse dépenses - Déficit/dette & -0.563 &  &  &  \\
+ & Baisse dépenses - Temps travaillé & -0.361 &  &  &  \\
+ & Hausse impôts - Déficit/dette & -0.052 &  &  &  \\
+ & Hausse impôts - Temps travaillé & -0.006 &  &  &  \\
+ & Déficit/dette - Temps travaillé & -0.151 &  &  &  \\
+\bottomrule
+\end{talltblr}
+\end{table*}

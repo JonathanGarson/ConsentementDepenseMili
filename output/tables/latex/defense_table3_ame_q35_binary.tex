@@ -1,0 +1,24 @@
+\begin{table}
+\centering
+\begin{talltblr}[         %% tabularray outer open
+caption={Table 3. Spécification binaire du risque de conflit},
+note{}={Average marginal effects from a weighted probit model using survey weights. q35 is coded as high risk (Tres eleve/Assez eleve) versus low risk (Plutot faible/Tres faible). 'Vous ne savez pas' is excluded. Heteroskedasticity-robust SE in parentheses.},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]},
+column{3}={}{halign=c,},
+column{1,2}={}{halign=l,},
+}                     %% tabularray inner close
+\toprule
+&    & AME (q35 binaire) \\ \midrule %% TinyTableHeader
+q30\_q2 & Plutôt pas confiance - Pas du tout confiance & \num{0.039} \\
+&  & (\num{0.034}) \\
+& Plutôt confiance - Pas du tout confiance & \num{-0.082}+ \\
+&  & (\num{0.042}) \\
+& Tout à fait confiance - Pas du tout confiance & \num{-0.260}*** \\
+&  & (\num{0.065}) \\
+q35\_binary & Risque eleve - Risque faible & \num{0.077}* \\
+&  & (\num{0.031}) \\
+\bottomrule
+\end{talltblr}
+\end{table}

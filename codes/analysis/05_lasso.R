@@ -17,7 +17,7 @@ if (length(missing_packages) > 0) {
   stop(
     "Missing required package(s): ",
     paste(missing_packages, collapse = ", "),
-    ". Install them or update the project renv before running 04_lasso.R.",
+    ". Install them or update the project renv before running 05_lasso.R.",
     call. = FALSE
   )
 }
@@ -32,7 +32,9 @@ suppressPackageStartupMessages({
 
 data_final_dir <- path_data_final()
 table_dir <- output_path("tables")
+table_latex_dir <- file.path(table_dir, "latex")
 dir.create(table_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(table_latex_dir, recursive = TRUE, showWarnings = FALSE)
 
 
 # Settings ----
@@ -901,7 +903,7 @@ write_post_lasso_tables <- function(post_lasso_results, table_specs) {
 
   for (i in seq_along(table_specs)) {
     spec <- table_specs[[i]]
-    output_file <- file.path(table_dir, spec$file_name)
+    output_file <- file.path(table_latex_dir, spec$file_name)
 
     write_post_lasso_table(
       post_lasso_results = post_lasso_results,
@@ -1083,13 +1085,17 @@ post_lasso_table_specs <- list(
 
 write_post_lasso_tables(post_lasso_results, post_lasso_table_specs)
 
-legacy_post_lasso_table_file <- file.path(table_dir, "lasso_postlasso_ame.tex")
-if (file.exists(legacy_post_lasso_table_file)) {
-  invisible(file.remove(legacy_post_lasso_table_file))
+legacy_post_lasso_table_files <- file.path(
+  c(table_dir, table_latex_dir),
+  "lasso_postlasso_ame.tex"
+)
+legacy_post_lasso_table_files <- legacy_post_lasso_table_files[file.exists(legacy_post_lasso_table_files)]
+if (length(legacy_post_lasso_table_files) > 0) {
+  invisible(file.remove(legacy_post_lasso_table_files))
 }
 
 stale_post_lasso_table_files <- file.path(
-  table_dir,
+  table_latex_dir,
   c(
     "lasso_postlasso_ame_01_sociodemographie.tex",
     "lasso_postlasso_ame_02_territoire_socioeco.tex",
@@ -1125,5 +1131,5 @@ cat(
 cat("Selected variable file: ", selected_variables_file, "\n", sep = "")
 cat("Post-LASSO AME tables:\n")
 for (spec in post_lasso_table_specs) {
-  cat("  - ", file.path(table_dir, spec$file_name), "\n", sep = "")
+  cat("  - ", file.path(table_latex_dir, spec$file_name), "\n", sep = "")
 }

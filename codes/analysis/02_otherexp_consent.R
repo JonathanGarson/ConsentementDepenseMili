@@ -1,13 +1,16 @@
-# This code mirrors the defense-spending analysis for other expenditure outcomes.
+# This code compares the main controlled defense-spending model across expenditure outcomes.
 
 library(data.table)
 library(fixest)
-library(modelsummary)
 library(marginaleffects)
 
 data_final_dir <- path_data_final()
 table_dir <- output_path("tables")
+table_latex_dir <- file.path(table_dir, "latex")
+table_html_dir <- file.path(table_dir, "html")
 dir.create(table_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(table_latex_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(table_html_dir, recursive = TRUE, showWarnings = FALSE)
 
 empty_to_na <- function(x) {
   if (!is.character(x)) {
@@ -24,6 +27,110 @@ relevel_factor <- function(x, ref, var_name) {
     stop("Reference level '", ref, "' not found in ", var_name, call. = FALSE)
   }
   relevel(x, ref = ref)
+}
+
+relevel_q30_factor <- function(x) {
+  q30_levels <- c(
+    "Pas du tout confiance",
+    "Plutôt pas confiance",
+    "Plutôt confiance",
+    "Tout à fait confiance"
+  )
+  x_chr <- as.character(x)
+  unexpected <- setdiff(unique(na.omit(x_chr)), q30_levels)
+
+  if (length(unexpected) > 0L) {
+    stop(
+      "Unexpected level(s) in q30_q2: ",
+      paste(unexpected, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  if (!q30_levels[1] %chin% x_chr) {
+    stop("Reference level '", q30_levels[1], "' not found in q30_q2", call. = FALSE)
+  }
+
+  factor(x_chr, levels = q30_levels)
+}
+
+relevel_q5_factor <- function(x) {
+  q5_levels <- c("Non", "Oui")
+  x_chr <- as.character(x)
+  unexpected <- setdiff(unique(na.omit(x_chr)), q5_levels)
+
+  if (length(unexpected) > 0L) {
+    stop(
+      "Unexpected level(s) in q5 after yes/no filtering: ",
+      paste(unexpected, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  if (!q5_levels[1] %chin% x_chr) {
+    stop("Reference level '", q5_levels[1], "' not found in q5", call. = FALSE)
+  }
+
+  factor(x_chr, levels = q5_levels)
+}
+
+relevel_q35_tres_faible_factor <- function(x) {
+  q35_levels <- c(
+    "Très faible",
+    "Plutôt faible",
+    "Assez élevé",
+    "Très élevé",
+    "Vous ne savez pas"
+  )
+  x_chr <- as.character(x)
+  unexpected <- setdiff(unique(na.omit(x_chr)), q35_levels)
+
+  if (length(unexpected) > 0L) {
+    stop(
+      "Unexpected level(s) in q35: ",
+      paste(unexpected, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  if (!q35_levels[1] %chin% x_chr) {
+    stop("Reference level '", q35_levels[1], "' not found in q35", call. = FALSE)
+  }
+
+  factor(x_chr, levels = q35_levels)
+}
+
+relevel_satisfaction_factor <- function(x, var_name) {
+  sat_levels <- c(
+    "Pas du tout satisfait(e)",
+    "Plutôt pas satisfait(e)",
+    "Plutôt satisfait(e)",
+    "Très satisfait(e)"
+  )
+  x_chr <- as.character(x)
+  unexpected <- setdiff(unique(na.omit(x_chr)), sat_levels)
+
+  if (length(unexpected) > 0L) {
+    stop(
+      "Unexpected level(s) in ", var_name, ": ",
+      paste(unexpected, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  if (!sat_levels[1] %chin% x_chr) {
+    stop("Reference level '", sat_levels[1], "' not found in ", var_name, call. = FALSE)
+  }
+
+  factor(x_chr, levels = sat_levels)
+}
+
+relevel_sat_factor <- function(x) {
+  relevel_satisfaction_factor(x, var_name = "sat")
+}
+
+relevel_q28_factor <- function(x) {
+  relevel_satisfaction_factor(x, var_name = "q28")
 }
 
 filter_valid_weights <- function(data) {
@@ -72,21 +179,59 @@ relevel_income_factor <- function(x) {
 }
 
 clean_ame_labels <- function(ame) {
+  revenue_label_map <- c(
+    "Moins de 12 000€; (soit moins de 1 000€; par mois)" = "< 12k",
+    "De 12 000€; à moins de 18 000€; (1 000€; à 1 500€; par mois)" = "12k--18k",
+    "De 18 000€; à moins de 24 000€; (1 500€; à 2 000€; par mois)" = "18k--24k",
+    "De 24 000€; à moins de 36 000€; (2 000€; à 3 000€; par mois)" = "24k--36k",
+    "De 36 000€; à moins de 48 000€; (3 000€; à 4 000€; par mois)" = "36k--48k",
+    "De 48 000€; à moins de 60 000€; (4 000€; à 5 000€; par mois)" = "48k--60k",
+    "De 60 000€; à moins de 72 000€; (5 000€; à 6 000€; par mois)" = "60k--72k",
+    "De 72 000€; à moins de 144 000€; (6 000€; à 12 000€; par mois)" = "72k--144k",
+    "144 000€; et plus (12 000€; par mois et plus)" = "144k+",
+    "Je ne souhaite pas répondre" = "NSP"
+  )
+
   ame$term[ame$term == "q19"] <- "Niveau d'imposition"
   ame$term[ame$term == "q30_q2"] <- "Confiance dans l'État"
   ame$term[ame$term == "q35"] <- "Risque de conflit"
+  ame$term[ame$term == "q5"] <- "Impôt sur le revenu"
+  ame$term[ame$term == "q28"] <- "Satisfaction Utilisation Argent Public"
+  ame$term[ame$term == "gender"] <- "Genre"
+  ame$term[ame$term == "continuous_age"] <- "Age"
+  ame$term[ame$term == "continuous_age_sq"] <- "Age\\textsuperscript{2}"
+  ame$term[ame$term == "continuous_age_norm"] <- "Age"
+  ame$term[ame$term == "continuous_age_norm_sq"] <- "Age\\textsuperscript{2}"
+  ame$term[ame$term == "acte_citoyen"] <- "Acte citoyen"
+  ame$term[ame$term == "tranche_revenus"] <- "Revenus"
 
-  ame$contrast[ame$contrast == "Ni trop, ni pas assez élevés - Trop élevés"] <- "Ni trop ni peu - Trop élevés"
-  ame$contrast[ame$contrast == "Pas assez élevés - Trop élevés"] <- "Pas assez - Trop élevés"
+  ame$contrast[ame$contrast == "Pas assez élevés - Ni trop, ni pas assez élevés"] <- "Pas assez - Juste"
+  ame$contrast[ame$contrast == "Trop élevés - Ni trop, ni pas assez élevés"] <- "Trop élevés - Juste"
   ame$contrast[ame$contrast == "Plutôt confiance - Pas du tout confiance"] <- "Plutôt conf. - Pas du tout"
   ame$contrast[ame$contrast == "Plutôt pas confiance - Pas du tout confiance"] <- "Plutôt pas conf. - Pas du tout"
   ame$contrast[ame$contrast == "Tout à fait confiance - Pas du tout confiance"] <- "Tout à fait conf. - Pas du tout"
-  ame$contrast[ame$contrast == "Vous ne savez pas - Très élevé"] <- "NSP - Très élevé"
+  ame$contrast <- gsub("Vous ne savez pas", "NSP", ame$contrast, fixed = TRUE)
+  ame$contrast[ame$term %in% c("Age", "Age\\textsuperscript{2}")] <- ""
+
+  for (long_label in names(revenue_label_map)) {
+    ame$contrast <- gsub(
+      long_label,
+      revenue_label_map[[long_label]],
+      ame$contrast,
+      fixed = TRUE
+    )
+  }
 
   reference_suffixes <- c(
+    " - Pas du tout d’accord",
     " - Pas du tout",
-    " - Trop élevés",
-    " - Très élevé"
+    " - Juste",
+    " - Très élevé",
+    " - Très faible",
+    " - Non",
+    " - Pas du tout satisfait(e)",
+    " - Femme",
+    " - < 12k"
   )
   for (suffix in reference_suffixes) {
     suffix_idx <- !is.na(ame$contrast) & endsWith(ame$contrast, suffix)
@@ -102,99 +247,67 @@ clean_ame_labels <- function(ame) {
 
 order_otherexp_table_rows <- function(ame) {
   term_order <- c(
-    "Confiance dans l'État",
+    "Acte citoyen",
     "Niveau d'imposition",
-    "Risque de conflit"
+    "Impôt sur le revenu",
+    "Risque de conflit",
+    "Satisfaction Utilisation Argent Public",
+    "Genre",
+    "Age",
+    "Age\\textsuperscript{2}",
+    "Revenus"
   )
-  contrast_order <- c(
-    "Plutôt conf.",
-    "Plutôt pas conf.",
-    "Tout à fait conf.",
-    "Ni trop ni peu",
-    "Pas assez",
-    "Assez élevé",
-    "Plutôt faible",
-    "Très faible",
-    "NSP"
+  contrast_order <- list(
+    "Acte citoyen" = c("Plutôt pas d’accord", "Plutôt d’accord", "Tout à fait d’accord"),
+    "Niveau d'imposition" = c("Trop élevés", "Pas assez"),
+    "Impôt sur le revenu" = "Oui",
+    "Risque de conflit" = c("Plutôt faible", "Assez élevé", "Très élevé", "NSP"),
+    "Satisfaction Utilisation Argent Public" = c("Plutôt pas satisfait(e)", "Plutôt satisfait(e)", "Très satisfait(e)"),
+    "Genre" = "Homme",
+    "Age" = "",
+    "Age\\textsuperscript{2}" = "",
+    "Revenus" = c(
+      "12k--18k",
+      "18k--24k",
+      "24k--36k",
+      "36k--48k",
+      "48k--60k",
+      "60k--72k",
+      "72k--144k",
+      "144k+",
+      "NSP"
+    )
+  )
+  contrast_rank <- vapply(
+    seq_len(nrow(ame)),
+    function(i) {
+      term_contrast_order <- contrast_order[[ame$term[i]]]
+      if (is.null(term_contrast_order)) {
+        return(Inf)
+      }
+
+      rank <- match(ame$contrast[i], term_contrast_order)
+      ifelse(is.na(rank), length(term_contrast_order) + 1L, rank)
+    },
+    numeric(1)
   )
 
   ordering_frame <- data.table(
     term_rank = fifelse(is.na(match(ame$term, term_order)), length(term_order) + 1L, match(ame$term, term_order)),
-    contrast_rank = fifelse(is.na(match(ame$contrast, contrast_order)), length(contrast_order) + 1L, match(ame$contrast, contrast_order))
+    contrast_rank = contrast_rank
   )
   order_idx <- do.call(order, ordering_frame)
   ame[order_idx, ]
 }
 
-add_q35_binary <- function(data) {
-  data[, q35_binary := fcase(
-    q35 %chin% c("Très élevé", "Assez élevé"), "Risque élevé",
-    q35 %chin% c("Plutôt faible", "Très faible"), "Risque faible",
-    default = NA_character_
-    )
-  ]
-  data[!is.na(q35_binary)]
-}
-
-otherexp_control_vars <- c(
-  "pcs", "matri", "foyer", "continuous_age", "tailleagglo5",
-  "tranche_revenus", "diplome", "partisane", "gender"
-)
-
-fit_otherexp_model <- function(data,
-                               outcome,
-                               partisane_ref = "Aucun",
-                               q30_ref = "Pas du tout confiance",
-                               q35_ref = "Très élevé",
-                               q19_ref = "Trop élevés",
-                               pcs_ref = "Retraité",
-                               gender_ref = "Femme",
-                               include_controls = FALSE,
-                               use_q35_binary = FALSE) {
+fit_comparison_model <- function(data, outcome) {
   data <- copy(data)
-  if (use_q35_binary) {
-    required_vars <- c(outcome, "q30_q2", "q35", "weights")
-    data <- data[complete.cases(data[, ..required_vars])]
-    data <- add_q35_binary(data)
-    data[, q30_q2 := relevel_factor(q30_q2, ref = q30_ref, var_name = "q30_q2")]
-    data[, q35_binary := relevel_factor(q35_binary, ref = "Risque faible", var_name = "q35_binary")]
-    model_formula <- as.formula(sprintf("%s ~ q30_q2 + q35_binary", outcome))
-  } else {
-    required_vars <- c(outcome, "partisane", "q19", "q30_q2", "q35", "weights")
-    if (include_controls) {
-      required_vars <- c(required_vars, setdiff(otherexp_control_vars, "partisane"))
-    }
-    data <- data[complete.cases(data[, ..required_vars])]
-    data[, partisane := relevel_factor(partisane, ref = partisane_ref, var_name = "partisane")]
-    data[, q30_q2 := relevel_factor(q30_q2, ref = q30_ref, var_name = "q30_q2")]
-    data[, q35 := relevel_factor(q35, ref = q35_ref, var_name = "q35")]
-    data[, q19 := relevel_factor(q19, ref = q19_ref, var_name = "q19")]
-
-    if (include_controls) {
-      pcs_reference <- pcs_ref
-      data[, gender := relevel_factor(gender, ref = gender_ref, var_name = "gender")]
-      data[
-        ,
-        `:=`(
-          pcs = relevel_factor(pcs, ref = pcs_reference, var_name = "pcs"),
-          matri = factor(matri),
-          foyer = factor(foyer),
-          tailleagglo5 = factor(tailleagglo5),
-          tranche_revenus = relevel_income_factor(tranche_revenus),
-          diplome = factor(diplome)
-        )
-      ]
-
-      model_formula <- as.formula(
-        sprintf(
-          "%s ~ q30_q2 + q35 + q19 + pcs + matri + foyer + continuous_age + tailleagglo5 + tranche_revenus + diplome + partisane + gender",
-          outcome
-        )
-      )
-    } else {
-      model_formula <- as.formula(sprintf("%s ~ q30_q2 + q35 + q19 + partisane", outcome))
-    }
-  }
+  model_formula <- as.formula(
+    sprintf(
+      "%s ~ q35 + q19 + q5 + pcs + matri + foyer + continuous_age_norm + continuous_age_norm_sq + acte_citoyen + tailleagglo5 + tranche_revenus + diplome + partisane + q28 + gender + sat",
+      outcome
+    )
+  )
 
   model <- feglm(
     model_formula,
@@ -214,174 +327,355 @@ fit_otherexp_model <- function(data,
   )
 }
 
-postprocess_otherexp_table <- function(path, spanner_label, outcome_headers) {
-  term_labels <- c(
-    "Confiance dans l'État",
-    "Niveau d'imposition",
-    "Risque de conflit"
-  )
-  reference_labels <- c(
-    "Confiance dans l'État" = "Pas du tout confiance",
-    "Niveau d'imposition" = "Trop élevés",
-    "Risque de conflit" = "Très élevé"
-  )
-  lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
-  lines <- sub("\\\\centering", "\\\\centering\n\\\\scriptsize", lines, fixed = FALSE)
-
-  header_idx <- grep("TinyTableHeader", lines, fixed = TRUE)
-  if (length(header_idx) != 1L) {
-    stop("Could not locate the non-defense table header row for post-processing.", call. = FALSE)
+format_ame_cell <- function(ame, term_label, contrast_label) {
+  row <- as.data.table(ame)[term == term_label & contrast == contrast_label]
+  if (nrow(row) == 0L) {
+    return("")
   }
 
-  column_line <- paste0("& & ", paste(outcome_headers, collapse = " & "), " \\\\")
-  lines[header_idx] <- paste0(column_line, "\n\\midrule %% TinyTableHeader")
-  spanner_line <- paste0("& & \\SetCell[c=", length(outcome_headers), "]{c} ", spanner_label, " \\\\")
-  lines <- append(lines, spanner_line, after = header_idx - 1L)
-
-  first_term_idx <- which(vapply(
-    lines,
-    function(line) any(startsWith(line, paste0(term_labels, " &"))),
-    logical(1)
-  ))[1]
-  observations_idx <- which(startsWith(lines, "Observations &"))
-  bottomrule_idx <- grep("^\\\\bottomrule", lines)
-
-  if (length(first_term_idx) != 1L || length(bottomrule_idx) != 1L || first_term_idx >= bottomrule_idx) {
-    stop("Could not locate the non-defense table body for post-processing.", call. = FALSE)
+  estimate <- row$estimate[[1L]]
+  std_error <- row$std.error[[1L]]
+  p_value <- row$p.value[[1L]]
+  if (abs(estimate) < 0.0005) {
+    estimate <- 0
+  }
+  if (abs(std_error) < 0.0005) {
+    std_error <- 0
   }
 
-  if (length(observations_idx) == 1L && first_term_idx < observations_idx) {
-    body_lines <- lines[first_term_idx:(observations_idx - 1L)]
-    summary_lines <- lines[observations_idx:(bottomrule_idx - 1L)]
+  stars <- if (is.na(p_value)) {
+    ""
+  } else if (p_value < 0.001) {
+    "***"
+  } else if (p_value < 0.01) {
+    "**"
+  } else if (p_value < 0.05) {
+    "*"
+  } else if (p_value < 0.1) {
+    "+"
   } else {
-    body_lines <- lines[first_term_idx:(bottomrule_idx - 1L)]
-    summary_lines <- character(0)
+    ""
   }
 
-  block_starts <- which(vapply(
-    body_lines,
-    function(line) any(startsWith(line, paste0(term_labels, " &"))),
-    logical(1)
-  ))
+  sprintf("\\num{%.3f}%s (\\num{%.3f})", estimate, stars, std_error)
+}
 
-  if (length(block_starts) == 0L) {
-    stop("Could not identify term blocks in the non-defense table body.", call. = FALSE)
+format_ame_cell_html <- function(ame, term_label, contrast_label) {
+  row <- as.data.table(ame)[term == term_label & contrast == contrast_label]
+  if (nrow(row) == 0L) {
+    return("")
   }
 
-  block_ends <- c(block_starts[-1L] - 1L, length(body_lines))
-  blocks <- setNames(vector("list", length(term_labels)), term_labels)
-
-  for (i in seq_along(block_starts)) {
-    block <- body_lines[block_starts[i]:block_ends[i]]
-    matched_term <- term_labels[vapply(
-      term_labels,
-      function(term_label) startsWith(block[1], paste0(term_label, " &")),
-      logical(1)
-    )]
-
-    if (length(matched_term) == 1L) {
-      blocks[[matched_term]] <- block
-    }
+  estimate <- row$estimate[[1L]]
+  std_error <- row$std.error[[1L]]
+  p_value <- row$p.value[[1L]]
+  if (abs(estimate) < 0.0005) {
+    estimate <- 0
+  }
+  if (abs(std_error) < 0.0005) {
+    std_error <- 0
   }
 
-  reordered_lines <- character(0)
-  reordered_start_idx <- integer(0)
-
-  for (term_label in term_labels) {
-    block <- blocks[[term_label]]
-    if (length(block) == 0L) {
-      next
-    }
-
-    reordered_start_idx <- c(reordered_start_idx, length(reordered_lines) + 1L)
-    if (term_label %in% names(reference_labels)) {
-      model_columns <- length(outcome_headers)
-      reference_cells <- paste(rep("\\textit{Ref}", model_columns), collapse = " & ")
-      original_row_prefix <- paste0(term_label, " &")
-      block[1] <- paste0(
-        term_label, " & ", reference_labels[[term_label]], " & ",
-        reference_cells, " \\\\",
-        "\n&", substring(block[1], nchar(original_row_prefix) + 1L)
-      )
-    }
-    reordered_lines <- c(reordered_lines, block)
+  stars <- if (is.na(p_value)) {
+    ""
+  } else if (p_value < 0.001) {
+    "***"
+  } else if (p_value < 0.01) {
+    "**"
+  } else if (p_value < 0.05) {
+    "*"
+  } else if (p_value < 0.1) {
+    "+"
+  } else {
+    ""
   }
 
-  if (length(reordered_lines) == 0L) {
-    stop("No term blocks available after reordering the non-defense table.", call. = FALSE)
+  sprintf("%.3f%s (%.3f)", estimate, stars, std_error)
+}
+
+write_otherexp_table <- function(path, ames, nobs_by_outcome) {
+  model_cell <- function(term_label, contrast_label) {
+    vapply(ames, format_ame_cell, character(1), term_label = term_label, contrast_label = contrast_label)
+  }
+  add_row <- function(term_label, contrast_label, cells) {
+    paste(c(term_label, contrast_label, cells), collapse = " & ")
+  }
+  add_ref <- function(term_label, reference_label) {
+    add_row(paste0("\\textbf{", term_label, "}"), reference_label, rep("\\textit{Ref}", length(ames)))
+  }
+  add_estimate <- function(term_label, contrast_label, display_label, bold = FALSE) {
+    first_cell <- if (bold) paste0("\\textbf{", term_label, "}") else ""
+    add_row(first_cell, display_label, model_cell(term_label, contrast_label))
   }
 
-  for (i in seq_along(reordered_start_idx)) {
-    row_idx <- reordered_start_idx[i]
-    matched_term <- term_labels[vapply(
-      term_labels,
-      function(term_label) startsWith(reordered_lines[row_idx], paste0(term_label, " &")),
-      logical(1)
-    )]
+  body <- c(
+    add_ref("Acte citoyen", "Pas du tout d’accord"),
+    add_estimate("Acte citoyen", "Plutôt pas d’accord", "Plutôt pas d’accord"),
+    add_estimate("Acte citoyen", "Plutôt d’accord", "Plutôt d’accord"),
+    add_estimate("Acte citoyen", "Tout à fait d’accord", "Tout à fait d’accord"),
+    "\\midrule",
+    add_ref("Niveau d'imposition", "Juste"),
+    add_estimate("Niveau d'imposition", "Trop élevés", "Trop élevés"),
+    add_estimate("Niveau d'imposition", "Pas assez", "Pas assez"),
+    "\\midrule",
+    add_ref("Impôt sur le revenu", "Non"),
+    add_estimate("Impôt sur le revenu", "Oui", "Oui"),
+    "\\midrule",
+    add_ref("Risque de conflit", "Très faible"),
+    add_estimate("Risque de conflit", "Plutôt faible", "Plutôt faible"),
+    add_estimate("Risque de conflit", "Assez élevé", "Assez élevé"),
+    add_estimate("Risque de conflit", "Très élevé", "Très élevé"),
+    add_estimate("Risque de conflit", "NSP", "NSP"),
+    "\\midrule",
+    add_ref("Satisfaction Utilisation Argent Public", "Pas du tout satisfait(e)"),
+    add_estimate("Satisfaction Utilisation Argent Public", "Plutôt pas satisfait(e)", "Plutôt pas satisfait(e)"),
+    add_estimate("Satisfaction Utilisation Argent Public", "Plutôt satisfait(e)", "Plutôt satisfait(e)"),
+    add_estimate("Satisfaction Utilisation Argent Public", "Très satisfait(e)", "Très satisfait(e)"),
+    "\\midrule",
+    add_ref("Genre", "Femme"),
+    add_estimate("Genre", "Homme", "Homme"),
+    "\\midrule",
+    add_estimate("Age", "", "", bold = TRUE),
+    "\\midrule",
+    add_estimate("Age\\textsuperscript{2}", "", "", bold = TRUE),
+    "\\midrule",
+    add_ref("Revenus", "< 12k"),
+    add_estimate("Revenus", "12k--18k", "12k--18k"),
+    add_estimate("Revenus", "18k--24k", "18k--24k"),
+    add_estimate("Revenus", "24k--36k", "24k--36k"),
+    add_estimate("Revenus", "36k--48k", "36k--48k"),
+    add_estimate("Revenus", "48k--60k", "48k--60k"),
+    add_estimate("Revenus", "60k--72k", "60k--72k"),
+    add_estimate("Revenus", "72k--144k", "72k--144k"),
+    add_estimate("Revenus", "144k+", "144k+"),
+    add_estimate("Revenus", "NSP", "NSP")
+  )
+  body <- paste0(body, " \\\\")
+  body[body == "\\midrule \\\\"] <- "\\midrule"
 
-    if (length(matched_term) != 1L) {
-      next
-    }
-
-    reordered_lines[row_idx] <- sub(
-      paste0("^", matched_term, " &"),
-      paste0("\\\\textbf{", matched_term, "} &"),
-      reordered_lines[row_idx]
-    )
-
-    if (i > 1L) {
-      reordered_lines[row_idx] <- paste0("\\midrule\n", reordered_lines[row_idx])
-    }
-  }
+  note_text <- paste(
+    "\\textbf{Note:} Les quatre modèles sont estimés sur un échantillon commun.",
+    "Ils reprennent la spécification du modèle 3 de la table détaillée de défense : risque de conflit détaillé, niveau d'imposition,",
+    "paiement de l'impôt sur le revenu, Satisfaction Utilisation Argent Public,",
+    "la catégorie socio-professionnelle, la situation matrimoniale, le foyer, l'âge, l'âge au carré,",
+    "l'acte citoyen, la taille d'agglomération, les revenus, le diplôme, la proximité partisane,",
+    "le genre et la satisfaction.",
+    "Les coefficients présentés correspondent aux effets marginaux moyens estimés.",
+    "Les écarts-types robustes à l’hétéroscédasticité figurent entre parenthèses à côté des estimations.",
+    "Seuil de confiance : + p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001."
+  )
 
   lines <- c(
-    lines[seq_len(first_term_idx - 1L)],
-    reordered_lines,
-    if (length(summary_lines) > 0L) {
-      c(paste0("\\midrule\\midrule\n", summary_lines[1]), summary_lines[-1L])
-    },
-    lines[bottomrule_idx:length(lines)]
+    "\\begin{table*}[!t]",
+    "\\centering",
+    "\\scriptsize \\selectfont",
+    "\\setlength{\\tabcolsep}{2pt}",
+    "",
+    "\\begin{talltblr}[",
+    "caption={Les déterminants du refus de baisser les dépenses publiques par poste},",
+    "label={tab:deter_consent_depenses},",
+    paste0("note{}={", note_text, "},"),
+    "]{",
+    "width=0.98\\textwidth,",
+    "\\rowsep = 0pt,",
+    "colspec={",
+    "Q[l,wd=0.17\\textwidth]",
+    "Q[l,wd=0.16\\textwidth]",
+    "Q[c,wd=0.15\\textwidth]",
+    "Q[c,wd=0.15\\textwidth]",
+    "Q[c,wd=0.15\\textwidth]",
+    "Q[c,wd=0.15\\textwidth]",
+    "},",
+    "column{3,4,5,6}={halign=c},",
+    "column{1,2}={halign=l},",
+    "row{1,2}={font=\\bfseries},",
+    "}",
+    "\\toprule",
+    "& & \\SetCell[c=4]{c} Refus de baisser la dépense considérée \\\\",
+    paste0("& & ", paste(names(ames), collapse = " & "), " \\\\"),
+    "\\midrule",
+    body,
+    "\\midrule\\midrule",
+    paste0(add_row("Observations", "", as.character(nobs_by_outcome)), " \\\\"),
+    paste0(add_row("Contrôle", "", rep("Oui", length(ames))), " \\\\"),
+    "\\bottomrule",
+    "\\end{talltblr}",
+    "\\end{table*}"
   )
 
   writeLines(lines, path, useBytes = TRUE)
 }
 
-write_ame_table <- function(models, file_name, notes, coef_omit = NULL, title = NULL, add_rows = NULL) {
-  output_file <- file.path(table_dir, file_name)
+html_escape <- function(x) {
+  x <- as.character(x)
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;", x, fixed = TRUE)
+  x <- gsub(">", "&gt;", x, fixed = TRUE)
+  x <- gsub("\"", "&quot;", x, fixed = TRUE)
+  x
+}
 
-  modelsummary(
-    models,
-    title = title,
-    escape = FALSE,
-    shape = term + contrast ~ model,
-    estimate = "{estimate}{stars}",
-    statistic = "({std.error})",
-    fmt = 3,
-    gof_omit = ".*",
-    coef_omit = coef_omit,
-    add_rows = add_rows,
-    notes = notes,
-    output = output_file
+write_otherexp_table_html <- function(path, ames, nobs_by_outcome) {
+  model_cell <- function(term_label, contrast_label) {
+    vapply(ames, format_ame_cell_html, character(1), term_label = term_label, contrast_label = contrast_label)
+  }
+
+  rows <- data.table(
+    term = character(),
+    contrast = character(),
+    section_start = logical()
+  )
+  for (outcome_label in names(ames)) {
+    rows[, (outcome_label) := character()]
+  }
+
+  add_row <- function(term_label, contrast_label, cells, section_start = FALSE) {
+    row <- data.table(
+      term = term_label,
+      contrast = contrast_label,
+      section_start = section_start
+    )
+    for (outcome_label in names(ames)) {
+      row[, (outcome_label) := cells[[outcome_label]]]
+    }
+    rows <<- rbind(rows, row, fill = TRUE)
+  }
+  add_ref <- function(term_label, reference_label) {
+    add_row(
+      term_label,
+      reference_label,
+      setNames(rep("Ref", length(ames)), names(ames)),
+      section_start = nrow(rows) > 0L
+    )
+  }
+  add_estimate <- function(term_label, contrast_label, display_label, bold = FALSE) {
+    add_row(
+      if (bold) term_label else "",
+      display_label,
+      model_cell(term_label, contrast_label),
+      section_start = bold
+    )
+  }
+
+  add_ref("Acte citoyen", "Pas du tout d'accord")
+  add_estimate("Acte citoyen", "Plutôt pas d’accord", "Plutôt pas d'accord")
+  add_estimate("Acte citoyen", "Plutôt d’accord", "Plutôt d'accord")
+  add_estimate("Acte citoyen", "Tout à fait d’accord", "Tout à fait d'accord")
+  add_ref("Niveau d'imposition", "Juste")
+  add_estimate("Niveau d'imposition", "Trop élevés", "Trop élevés")
+  add_estimate("Niveau d'imposition", "Pas assez", "Pas assez")
+  add_ref("Impôt sur le revenu", "Non")
+  add_estimate("Impôt sur le revenu", "Oui", "Oui")
+  add_ref("Risque de conflit", "Très faible")
+  add_estimate("Risque de conflit", "Plutôt faible", "Plutôt faible")
+  add_estimate("Risque de conflit", "Assez élevé", "Assez élevé")
+  add_estimate("Risque de conflit", "Très élevé", "Très élevé")
+  add_estimate("Risque de conflit", "NSP", "NSP")
+  add_ref("Satisfaction Utilisation Argent Public", "Pas du tout satisfait(e)")
+  add_estimate("Satisfaction Utilisation Argent Public", "Plutôt pas satisfait(e)", "Plutôt pas satisfait(e)")
+  add_estimate("Satisfaction Utilisation Argent Public", "Plutôt satisfait(e)", "Plutôt satisfait(e)")
+  add_estimate("Satisfaction Utilisation Argent Public", "Très satisfait(e)", "Très satisfait(e)")
+  add_ref("Genre", "Femme")
+  add_estimate("Genre", "Homme", "Homme")
+  add_estimate("Age", "", "", bold = TRUE)
+  add_estimate("Age\\textsuperscript{2}", "", "", bold = TRUE)
+  add_ref("Revenus", "< 12k")
+  add_estimate("Revenus", "12k--18k", "12k--18k")
+  add_estimate("Revenus", "18k--24k", "18k--24k")
+  add_estimate("Revenus", "24k--36k", "24k--36k")
+  add_estimate("Revenus", "36k--48k", "36k--48k")
+  add_estimate("Revenus", "48k--60k", "48k--60k")
+  add_estimate("Revenus", "60k--72k", "60k--72k")
+  add_estimate("Revenus", "72k--144k", "72k--144k")
+  add_estimate("Revenus", "144k+", "144k+")
+  add_estimate("Revenus", "NSP", "NSP")
+  add_row("Observations", "", setNames(as.character(nobs_by_outcome), names(ames)), section_start = TRUE)
+  add_row("Contrôle", "", setNames(rep("Oui", length(ames)), names(ames)))
+
+  render_term <- function(term) {
+    term <- html_escape(term)
+    term <- gsub("Age\\\\textsuperscript\\{2\\}", "Age<sup>2</sup>", term)
+    if (nzchar(term)) {
+      paste0("<strong>", term, "</strong>")
+    } else {
+      ""
+    }
+  }
+
+  render_row <- function(i) {
+    row <- rows[i]
+    class_attr <- if (isTRUE(row$section_start)) " class=\"section-start\"" else ""
+    cells <- c(
+      paste0("<td>", render_term(row$term), "</td>"),
+      paste0("<td>", html_escape(row$contrast), "</td>"),
+      vapply(
+        names(ames),
+        function(outcome_label) paste0("<td>", html_escape(row[[outcome_label]]), "</td>"),
+        character(1)
+      )
+    )
+    paste0("<tr", class_attr, ">", paste(cells, collapse = ""), "</tr>")
+  }
+
+  note_text <- paste(
+    "Note: Les quatre modèles sont estimés sur un échantillon commun.",
+    "Ils reprennent la spécification du modèle 3 de la table détaillée de défense : risque de conflit détaillé, niveau d'imposition,",
+    "paiement de l'impôt sur le revenu, Satisfaction Utilisation Argent Public,",
+    "la catégorie socio-professionnelle, la situation matrimoniale, le foyer, l'âge, l'âge au carré,",
+    "l'acte citoyen, la taille d'agglomération, les revenus, le diplôme, la proximité partisane,",
+    "le genre et la satisfaction.",
+    "Les coefficients présentés correspondent aux effets marginaux moyens estimés.",
+    "Les écarts-types robustes à l'hétéroscédasticité figurent entre parenthèses à côté des estimations.",
+    "Seuil de confiance : + p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001."
   )
 
-  message("Table saved to: ", output_file)
+  lines <- c(
+    "<!doctype html>",
+    "<html lang=\"fr\">",
+    "<head>",
+    "<meta charset=\"utf-8\">",
+    "<title>Les déterminants du refus de baisser les dépenses publiques par poste</title>",
+    "<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:24px;color:#111827;}table{border-collapse:collapse;font-size:13px;}caption{caption-side:top;text-align:left;font-weight:700;margin-bottom:8px;}th,td{border-bottom:1px solid #e5e7eb;padding:5px 7px;text-align:left;vertical-align:top;}th:nth-child(n+3),td:nth-child(n+3){text-align:center;}tr.section-start td{border-top:2px solid #111827;}tfoot td{border-top:2px solid #111827;font-size:12px;color:#374151;text-align:left;}</style>",
+    "</head>",
+    "<body>",
+    "<table>",
+    "<caption>Les déterminants du refus de baisser les dépenses publiques par poste</caption>",
+    "<thead>",
+    "<tr><th></th><th></th><th colspan=\"4\">Refus de baisser la dépense considérée</th></tr>",
+    paste0("<tr><th></th><th></th>", paste0("<th>", html_escape(names(ames)), "</th>", collapse = ""), "</tr>"),
+    "</thead>",
+    "<tbody>",
+    vapply(seq_len(nrow(rows)), render_row, character(1)),
+    "</tbody>",
+    "<tfoot>",
+    paste0("<tr><td colspan=\"", length(ames) + 2L, "\">", html_escape(note_text), "</td></tr>"),
+    "</tfoot>",
+    "</table>",
+    "</body>",
+    "</html>"
+  )
+
+  writeLines(lines, path, useBytes = TRUE)
 }
 
 outcome_labels <- c(
+  militaryexp_binary = "Défense",
   healthexp_binary = "Santé",
   pensionexp_binary = "Retraites",
   povertyexp_binary = "Pauvreté"
 )
 
-otherexp_char_vars <- c(
-  "partisane", "q19", "q30_q2", "q35", "pcs", "matri", "foyer",
-  "tailleagglo5", "tranche_revenus", "diplome", "gender"
+comparison_covariates <- c(
+  "q35", "q19", "q5", "pcs", "matri", "foyer",
+  "continuous_age", "q23", "tailleagglo5", "tranche_revenus",
+  "diplome", "partisane", "q28", "gender", "sat"
 )
-
-required_columns <- c(
-  names(outcome_labels), "q19", "q30_q2", "q35", "treatment", "weights",
-  otherexp_control_vars
+comparison_char_vars <- c(
+  "q35", "q19", "q5", "q23", "pcs", "matri", "foyer",
+  "tailleagglo5", "tranche_revenus", "diplome", "partisane", "q28", "gender", "sat"
 )
+comparison_sample_vars <- c(names(outcome_labels), comparison_covariates, "weights")
+required_columns <- c(comparison_sample_vars, "treatment")
 
 consent_other <- fread(file.path(data_final_dir, "final_survey2025.csv"))[treatment == 0]
 missing_columns <- setdiff(required_columns, names(consent_other))
@@ -396,61 +690,91 @@ consent_other <- filter_valid_weights(consent_other)
 
 consent_other[
   ,
-  (otherexp_char_vars) := lapply(.SD, empty_to_na),
-  .SDcols = otherexp_char_vars
+  (comparison_char_vars) := lapply(.SD, empty_to_na),
+  .SDcols = comparison_char_vars
 ]
+consent_other <- consent_other[q5 %chin% c("Oui", "Non")]
+consent_other <- consent_other[complete.cases(consent_other[, ..comparison_sample_vars])]
 
-controlled_model_outputs <- setNames(
-  lapply(
+if (nrow(consent_other) == 0L) {
+  stop("No complete-case observations for the common Table 2 sample.", call. = FALSE)
+}
+
+invalid_outcome_values <- names(outcome_labels)[
+  vapply(
     names(outcome_labels),
     function(outcome) {
-      fit_otherexp_model(
-      data = consent_other,
-      outcome = outcome,
-      partisane_ref = "Aucun",
-        q35_ref = "Très élevé",
-        q19_ref = "Trop élevés",
-        include_controls = TRUE
-      )
-    }
-  ),
-  outcome_labels
-)
-controlled_models <- lapply(
-  controlled_model_outputs,
-  function(model_output) order_otherexp_table_rows(clean_ame_labels(model_output$ame))
-)
-
-otherexp_add_rows <- data.frame(
-  term = c("Observations", "Contrôle"),
-  contrast = c("", ""),
-  stringsAsFactors = FALSE,
-  check.names = FALSE
-)
-
-for (outcome_label in names(controlled_model_outputs)) {
-  otherexp_add_rows[[outcome_label]] <- c(
-    as.character(controlled_model_outputs[[outcome_label]]$nobs),
-    "Oui"
+      any(!consent_other[[outcome]] %in% c(0L, 1L))
+    },
+    logical(1)
+  )
+]
+if (length(invalid_outcome_values) > 0L) {
+  stop(
+    "Outcome columns must be coded 0/1: ",
+    paste(invalid_outcome_values, collapse = ", "),
+    call. = FALSE
   )
 }
 
-write_ame_table(
-  models = controlled_models,
-  file_name = "otherexp_ame_baseline.tex",
-  title = "Refus de baisser les autres dépenses de l'État",
-  coef_omit = "pcs|matri|foyer|tailleagglo5|diplome|partisane|gender|continuous_age|tranche_revenus",
-  add_rows = otherexp_add_rows,
-  notes = c(
-    "Liste des variables de contrôle : catégorie socio-professionnelle, situation matrimoniale, foyer, âge, taille d'agglomération, revenus, diplôme, proximité partisane et genre.",
-    "+ p < 0,10 ; * p < 0,05 ; ** p < 0,01 ; *** p < 0,001.",
-    "Les coefficients présentés correspondent aux effets marginaux moyens estimés à partir de modèles probit pondérés par les poids de sondage. Les écarts-types robustes à l’hétéroscédasticité figurent entre parenthèses."
+age_mean <- mean(consent_other$continuous_age)
+age_sd <- sd(consent_other$continuous_age)
+if (!is.finite(age_sd) || age_sd <= 0) {
+  stop("Cannot normalize continuous_age: standard deviation is zero or missing.", call. = FALSE)
+}
+consent_other[
+  ,
+  `:=`(
+    continuous_age_norm = (continuous_age - age_mean) / age_sd,
+    continuous_age_norm_sq = ((continuous_age - age_mean) / age_sd)^2,
+    acte_citoyen = q23
   )
+]
+consent_other[, q35 := relevel_q35_tres_faible_factor(q35)]
+consent_other[, q19 := relevel_factor(q19, ref = "Ni trop, ni pas assez élevés", var_name = "q19")]
+consent_other[, q5 := relevel_q5_factor(q5)]
+consent_other[, gender := relevel_factor(gender, ref = "Femme", var_name = "gender")]
+consent_other[, acte_citoyen := relevel_factor(acte_citoyen, ref = "Pas du tout d’accord", var_name = "acte_citoyen")]
+consent_other[, partisane := relevel_factor(partisane, ref = "Aucun", var_name = "partisane")]
+consent_other[, q28 := relevel_q28_factor(q28)]
+consent_other[, sat := relevel_sat_factor(sat)]
+consent_other[
+  ,
+  `:=`(
+    pcs = relevel_factor(pcs, ref = "Retraité", var_name = "pcs"),
+    matri = factor(matri),
+    foyer = factor(foyer),
+    tailleagglo5 = factor(tailleagglo5),
+    tranche_revenus = relevel_income_factor(tranche_revenus),
+    diplome = factor(diplome)
+  )
+]
+
+comparison_model_outputs <- setNames(
+  lapply(
+    names(outcome_labels),
+    function(outcome) fit_comparison_model(consent_other, outcome)
+  ),
+  unname(outcome_labels)
 )
-postprocess_otherexp_table(
-  path = file.path(table_dir, "otherexp_ame_baseline.tex"),
-  spanner_label = "Refus de baisser la dépense considérée",
-  outcome_headers = unname(outcome_labels)
+comparison_ames <- lapply(
+  comparison_model_outputs,
+  function(model_output) order_otherexp_table_rows(clean_ame_labels(model_output$ame))
+)
+comparison_nobs <- vapply(comparison_model_outputs, `[[`, integer(1), "nobs")
+
+tex_output_file <- file.path(table_latex_dir, "otherexp_ame_baseline.tex")
+html_output_file <- file.path(table_html_dir, "otherexp_ame_baseline.html")
+write_otherexp_table(
+  path = tex_output_file,
+  ames = comparison_ames,
+  nobs_by_outcome = comparison_nobs
+)
+write_otherexp_table_html(
+  path = html_output_file,
+  ames = comparison_ames,
+  nobs_by_outcome = comparison_nobs
 )
 
-message("Table saved to: ", file.path(table_dir, "otherexp_ame_baseline.tex"))
+message("Table saved to: ", tex_output_file)
+message("Table saved to: ", html_output_file)

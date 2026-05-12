@@ -1,0 +1,151 @@
+<!-- preamble start -->
+<!DOCTYPE html> 
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tinytable_710t2cfivjywk1ayrkzf</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+<!-- preamble end -->
+
+    <script>
+
+      function styleCell_710t2cfivjywk1ayrkzf(i, j, css_id) {
+          var table = document.getElementById("tinytable_710t2cfivjywk1ayrkzf");
+          var cell = table.rows[i]?.cells[j];  // Safe navigation to avoid errors
+          if (cell) {
+              console.log(`Styling cell at (${i}, ${j}) with class ${css_id}`);
+              cell.classList.add(css_id);
+          } else {
+              console.warn(`Cell at (${i}, ${j}) not found.`);
+          }
+      }
+      function insertSpanRow(i, colspan, content) {
+        var table = document.getElementById('tinytable_710t2cfivjywk1ayrkzf');
+        var newRow = table.insertRow(i);
+        var newCell = newRow.insertCell(0);
+        newCell.setAttribute("colspan", colspan);
+        // newCell.innerText = content;
+        // this may be unsafe, but innerText does not interpret <br>
+        newCell.innerHTML = content;
+      }
+      function spanCell_710t2cfivjywk1ayrkzf(i, j, rowspan, colspan) {
+        var table = document.getElementById("tinytable_710t2cfivjywk1ayrkzf");
+        const targetRow = table.rows[i];
+        const targetCell = targetRow.cells[j];
+        for (let r = 0; r < rowspan; r++) {
+          // Only start deleting cells to the right for the first row (r == 0)
+          if (r === 0) {
+            // Delete cells to the right of the target cell in the first row
+            for (let c = colspan - 1; c > 0; c--) {
+              if (table.rows[i + r].cells[j + c]) {
+                table.rows[i + r].deleteCell(j + c);
+              }
+            }
+          }
+          // For rows below the first, delete starting from the target column
+          if (r > 0) {
+            for (let c = colspan - 1; c >= 0; c--) {
+              if (table.rows[i + r] && table.rows[i + r].cells[j]) {
+                table.rows[i + r].deleteCell(j);
+              }
+            }
+          }
+        }
+        // Set rowspan and colspan of the target cell
+        targetCell.rowSpan = rowspan;
+        targetCell.colSpan = colspan;
+      }
+      // tinytable span after
+      window.addEventListener('load', function () {
+          var cellsToStyle = [
+            // tinytable style arrays after
+          { positions: [ { i: 8, j: 2 },  ], css_id: 'tinytable_css_dcmpdwurbl9eekb4mybr',}, 
+          { positions: [ { i: 1, j: 2 }, { i: 2, j: 2 }, { i: 3, j: 2 }, { i: 4, j: 2 }, { i: 5, j: 2 }, { i: 6, j: 2 }, { i: 7, j: 2 },  ], css_id: 'tinytable_css_qyuq1o8basf2q3rwx2i4',}, 
+          { positions: [ { i: 0, j: 2 },  ], css_id: 'tinytable_css_tkz1o5uuo2pixvzetk65',}, 
+          { positions: [ { i: 8, j: 0 }, { i: 8, j: 1 },  ], css_id: 'tinytable_css_2xmsmfnpbjy2fa61c7c0',}, 
+          { positions: [ { i: 2, j: 0 }, { i: 3, j: 0 }, { i: 4, j: 0 }, { i: 1, j: 0 }, { i: 6, j: 0 }, { i: 7, j: 0 }, { i: 3, j: 1 }, { i: 5, j: 0 }, { i: 1, j: 1 }, { i: 2, j: 1 }, { i: 7, j: 1 }, { i: 4, j: 1 }, { i: 5, j: 1 }, { i: 6, j: 1 },  ], css_id: 'tinytable_css_xxlp9524wxahp0e72f26',}, 
+          { positions: [ { i: 0, j: 0 }, { i: 0, j: 1 },  ], css_id: 'tinytable_css_izws5vomxnjle935a9yc',}, 
+          ];
+
+          // Loop over the arrays to style the cells
+          cellsToStyle.forEach(function (group) {
+              group.positions.forEach(function (cell) {
+                  styleCell_710t2cfivjywk1ayrkzf(cell.i, cell.j, group.css_id);
+              });
+          });
+      });
+    </script>
+
+    <style>
+      /* tinytable css entries after */
+      .table td.tinytable_css_dcmpdwurbl9eekb4mybr, .table th.tinytable_css_dcmpdwurbl9eekb4mybr { text-align: center; border-bottom: solid #d3d8dc 0.1em; }
+      .table td.tinytable_css_qyuq1o8basf2q3rwx2i4, .table th.tinytable_css_qyuq1o8basf2q3rwx2i4 { text-align: center; }
+      .table td.tinytable_css_tkz1o5uuo2pixvzetk65, .table th.tinytable_css_tkz1o5uuo2pixvzetk65 { text-align: center; border-top: solid #d3d8dc 0.1em; border-bottom: solid #d3d8dc 0.05em; }
+      .table td.tinytable_css_2xmsmfnpbjy2fa61c7c0, .table th.tinytable_css_2xmsmfnpbjy2fa61c7c0 { text-align: left; border-bottom: solid #d3d8dc 0.1em; }
+      .table td.tinytable_css_xxlp9524wxahp0e72f26, .table th.tinytable_css_xxlp9524wxahp0e72f26 { text-align: left; }
+      .table td.tinytable_css_izws5vomxnjle935a9yc, .table th.tinytable_css_izws5vomxnjle935a9yc { text-align: left; border-top: solid #d3d8dc 0.1em; border-bottom: solid #d3d8dc 0.05em; }
+    </style>
+    <div class="container">
+      <table class="table table-borderless" id="tinytable_710t2cfivjywk1ayrkzf" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing='true'>
+        <thead>
+        <caption>Table 3. Spécification binaire du risque de conflit</caption>
+              <tr>
+                <th scope="col"> </th>
+                <th scope="col">  </th>
+                <th scope="col">AME (q35 binaire)</th>
+              </tr>
+        </thead>
+        <tfoot><tr><td colspan='3'>Average marginal effects from a weighted probit model using survey weights. q35 is coded as high risk (Tres eleve/Assez eleve) versus low risk (Plutot faible/Tres faible). 'Vous ne savez pas' is excluded. Heteroskedasticity-robust SE in parentheses.</td></tr></tfoot>
+        <tbody>
+                <tr>
+                  <td>q30_q2</td>
+                  <td>Plutôt pas confiance - Pas du tout confiance</td>
+                  <td>0.039</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td>(0.034)</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td>Plutôt confiance - Pas du tout confiance</td>
+                  <td>−0.082+</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td>(0.042)</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td>Tout à fait confiance - Pas du tout confiance</td>
+                  <td>−0.260***</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td>(0.065)</td>
+                </tr>
+                <tr>
+                  <td>q35_binary</td>
+                  <td>Risque eleve - Risque faible</td>
+                  <td>0.077*</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td>(0.031)</td>
+                </tr>
+        </tbody>
+      </table>
+    </div>
+<!-- postamble start -->
+  </body>
+
+</html>
+<!-- postamble end -->
+<!-- hack to avoid NA insertion in last line -->
